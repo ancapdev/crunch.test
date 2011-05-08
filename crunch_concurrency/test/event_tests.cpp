@@ -20,7 +20,7 @@ struct TestWaiter : Waiter
 
 BOOST_AUTO_TEST_SUITE(EventTests)
 
-    BOOST_AUTO_TEST_CASE(ConstructSetTest)
+BOOST_AUTO_TEST_CASE(ConstructSetTest)
 {
     Event e(true);
     BOOST_CHECK(e.IsSet());

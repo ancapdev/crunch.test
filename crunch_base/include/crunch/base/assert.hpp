@@ -56,4 +56,6 @@ bool HandleAssert(char const* condition, char const* file, int line, char const*
 #   define CRUNCH_ABORT(msg, ...) do { (void)sizeof(msg); } while(0)
 #endif
 
+#define CRUNCH_ASSERT_ALIGNMENT(ptr, alignment) CRUNCH_ASSERT((reinterpret_cast<std::size_t>(ptr) & ((alignment)-1)) == 0)
+
 #endif

@@ -1,0 +1,18 @@
+#ifndef CRUNCH_CONCURRENCY_MEMORY_ORDER_HPP
+#define CRUNCH_CONCURRENCY_MEMORY_ORDER_HPP
+
+namespace Crunch { namespace Concurrency {
+
+enum MemoryOrder
+{
+    MEMORY_ORDER_RELAXED,
+    MEMORY_ORDER_RELEASE,
+    MEMORY_ORDER_ACQUIRE,
+    MEMORY_ORDER_ACQ_REL,
+    MEMORY_ORDER_SEQ_CST,
+    MEMORY_ORDER_CONSUME
+};
+
+}}
+
+#endif
