@@ -5,14 +5,15 @@
 
 namespace Crunch {
 
+namespace Detail
+{
+    // defined in platform/<name>/assert.cpp
+    bool DefaultAssertHandler(char const* condition, char const* file, int line, char const* message);
+}
+
 namespace
 {
-    bool DefaultAssertHandler(char const* condition, char const* file, int line, char const* message)
-    {
-        return true;
-    }
-
-    AssertHandler gAssertHandler(&DefaultAssertHandler);
+    AssertHandler gAssertHandler(&Detail::DefaultAssertHandler);
 }
 
 void SetAssertHandler(AssertHandler const& handler)

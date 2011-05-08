@@ -6,6 +6,9 @@ add_library(crunch_concurrency_lib
   source/event.cpp
   source/meta_scheduler.cpp)
 
+target_link_libraries(crunch_concurrency_lib
+  crunch_base_lib)
+
 add_executable(crunch_concurrency_test
   test/event_tests.cpp
   test/main.cpp)

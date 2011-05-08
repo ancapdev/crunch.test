@@ -8,6 +8,13 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
+#
+# Platform properties
+#
+if(WIN32)
+  set(PLATFORM_NAME "win32")
+endif()
+
 
 #
 # boost package
