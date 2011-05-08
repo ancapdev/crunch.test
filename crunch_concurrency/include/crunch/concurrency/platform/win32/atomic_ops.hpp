@@ -24,6 +24,9 @@ namespace Detail
     struct AtomicStoreHelper;
 
     template<typename T, typename Enabler = void>
+    struct AtomicArithmeticHelper;
+
+    template<typename T, typename Enabler = void>
     struct AtomicSwapHelper;
 
     template<typename T, typename Enabler = void>
@@ -96,6 +99,88 @@ namespace Detail
                 if (ordering == MEMORY_ORDER_ACQUIRE)
                     CRUNCH_COMPILER_FENCE();
             }
+        }
+    };
+
+    template<typename T>
+    struct AtomicArithmeticHelper<T, typename boost::enable_if<boost::mpl::equal_to<boost::mpl::sizeof_<T>, boost::mpl::size_t<1>>>::type>
+    {
+        static T And(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedAnd8((char volatile*)&value, (char)mask);
+        }
+
+        static T Or(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedOr8((char volatile*)&value, (char)mask);
+        }
+
+        static T Xor(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedXor8((char volatile*)&value, (char)mask);
+        }
+    };
+
+    template<typename T>
+    struct AtomicArithmeticHelper<T, typename boost::enable_if<boost::mpl::equal_to<boost::mpl::sizeof_<T>, boost::mpl::size_t<2>>>::type>
+    {
+        static T Increment(T volatile& addend, MemoryOrder)
+        {
+            return (T)_InterlockedIncrement16((short volatile*)&addend) - 1;
+        }
+
+        static T Decrement(T volatile& addend, MemoryOrder)
+        {
+            return (T)_InterlockedDecrement16((short volatile*)&addend) + 1;
+        }
+
+        static T And(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedAnd16((short volatile*)&value, (short)mask);
+        }
+
+        static T Or(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedOr16((short volatile*)&value, (short)mask);
+        }
+
+        static T Xor(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedXor16((short volatile*)&value, (short)mask);
+        }
+    };
+
+    template<typename T>
+    struct AtomicArithmeticHelper<T, typename boost::enable_if<boost::mpl::equal_to<boost::mpl::sizeof_<T>, boost::mpl::size_t<4>>>::type>
+    {
+        static T Add(T volatile& addend, T value, MemoryOrder)
+        {
+            return (T)_InterlockedExchangeAdd((long volatile*)&addend, (long)value);
+        }
+
+        static T Increment(T volatile& addend, MemoryOrder)
+        {
+            return (T)_InterlockedIncrement((long volatile*)&addend) - 1;
+        }
+
+        static T Decrement(T volatile& addend, MemoryOrder)
+        {
+            return (T)_InterlockedDecrement((long volatile*)&addend) + 1;
+        }
+
+        static T And(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedAnd((long volatile*)&value, (long)mask);
+        }
+
+        static T Or(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedOr((long volatile*)&value, (long)mask);
+        }
+
+        static T Xor(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedXor((long volatile*)&value, (long)mask);
         }
     };
 
@@ -197,6 +282,40 @@ namespace Detail
     };
 
     template<typename T>
+    struct AtomicArithmeticHelper<T, typename boost::enable_if<boost::mpl::equal_to<boost::mpl::sizeof_<T>, boost::mpl::size_t<8>>>::type>
+    {
+        static T Add(T volatile& addend, T value, MemoryOrder)
+        {
+            return (T)_InterlockedExchangeAdd64((__int64 volatile*)&addend, (__int64)value);
+        }
+
+        static T Increment(T volatile& addend, MemoryOrder)
+        {
+            return (T)_InterlockedIncrement64((__int64 volatile*)&addend) - 1;
+        }
+
+        static T Decrement(T volatile& addend, MemoryOrder)
+        {
+            return (T)_InterlockedDecrement64((__int64 volatile*)&addend) + 1;
+        }
+
+        static T And(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedAnd64((__int64 volatile*)&value, (__int64)mask);
+        }
+
+        static T Or(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedOr64((__int64 volatile*)&value, (__int64)mask);
+        }
+
+        static T Xor(T volatile& value, T mask, MemoryOrder)
+        {
+            return (T)_InterlockedXor64((__int64 volatile*)&value, (__int64)mask);
+        }
+    };
+
+    template<typename T>
     struct AtomicSwapHelper<T, typename boost::enable_if<boost::mpl::equal_to<boost::mpl::sizeof_<T>, boost::mpl::size_t<8>>>::type>
     {
         static T Swap(T volatile& dst, T src, MemoryOrder)
@@ -268,6 +387,48 @@ bool AtomicCompareAndSwapTest(T volatile& dst, T src, T cmp, MemoryOrder orderin
 {
     CRUNCH_ASSERT_ALIGNMENT(&dst, sizeof(T));
     return Detail::AtomicCompareAndSwapTestHelper<T>::Cas(dst, src, cmp, ordering);
+}
+
+template<typename T>
+inline T AtomicIncrement(T volatile& addend, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+{
+    CRUNCH_ASSERT_ALIGNMENT(&addend, sizeof(T));
+    return Detail::AtomicArithmeticHelper<T>::Increment(addend, ordering);
+}
+
+template<typename T>
+inline T AtomicDecrement(T volatile& addend, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+{
+    CRUNCH_ASSERT_ALIGNMENT(&addend, sizeof(T));
+    return Detail::AtomicArithmeticHelper<T>::Decrement(addend, ordering);
+}
+
+template<typename T>
+inline T AtomicAdd(T volatile& addend, T value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+{
+    CRUNCH_ASSERT_ALIGNMENT(&addend, sizeof(T));
+    return Detail::AtomicArithmeticHelper<T>::Add(addend, value, ordering);
+}
+
+template<typename T>
+inline T AtomicAnd(T volatile& value, T mask, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+{
+    CRUNCH_ASSERT_ALIGNMENT(&value, sizeof(T));
+    return Detail::AtomicArithmeticHelper<T>::And(value, mask, ordering);
+}
+
+template<typename T>
+inline T AtomicOr(T volatile& value, T mask, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+{
+    CRUNCH_ASSERT_ALIGNMENT(&value, sizeof(T));
+    return Detail::AtomicArithmeticHelper<T>::Or(value, mask, ordering);
+}
+
+template<typename T>
+inline T AtomicXor(T volatile& value, T mask, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+{
+    CRUNCH_ASSERT_ALIGNMENT(&value, sizeof(T));
+    return Detail::AtomicArithmeticHelper<T>::Xor(value, mask, ordering);
 }
 
 }}
