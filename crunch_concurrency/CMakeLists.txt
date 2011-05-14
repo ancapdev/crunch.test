@@ -1,3 +1,10 @@
+if(WIN32)
+  set(_platformFiles
+    include/crunch/concurrency/platform/win32/atomic.hpp
+    include/crunch/concurrency/platform/win32/atomic_ops_x86.hpp
+    include/crunch/concurrency/platform/win32/atomic_type.hpp)  
+endif()
+
 add_library(crunch_concurrency_lib
   include/crunch/concurrency/atomic.hpp
   include/crunch/concurrency/event.hpp
@@ -6,9 +13,9 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/meta_scheduler.hpp
   include/crunch/concurrency/scheduler.hpp
   include/crunch/concurrency/waitable.hpp
-  include/crunch/concurrency/platform/${PLATFORM_NAME}/atomic_ops.hpp
   source/event.cpp
-  source/meta_scheduler.cpp)
+  source/meta_scheduler.cpp
+  ${_platformFiles})
 
 target_link_libraries(crunch_concurrency_lib
   crunch_base_lib)

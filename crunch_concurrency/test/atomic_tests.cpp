@@ -53,101 +53,105 @@ BOOST_AUTO_TEST_SUITE(AtomicTests)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(LoadTest, T, AtomicTypes)
 {
-    __declspec(align(8)) T value = 123;
-    BOOST_CHECK_EQUAL(value, AtomicLoad(value));
+    T v = 123;
+    Atomic<T> a;
+    std::memcpy(&a, &v, sizeof(T));
+    BOOST_CHECK_EQUAL(a.Load(), 123);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(StoreTest, T, AtomicTypes)
 {
-    __declspec(align(8)) T value = 0;
-    AtomicStore(value, T(123));
-    BOOST_CHECK_EQUAL(value, 123);
+    Atomic<T> a;
+    a.Store(123);
+    T v;
+    std::memcpy(&v, &a, sizeof(T));
+    BOOST_CHECK_EQUAL(v, 123);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(SwapTest, T, AtomicSwapTypes)
 {
-    __declspec(align(8)) T value = 0;
-    T const old = AtomicSwap(value, T(123));
-    BOOST_CHECK_EQUAL(old, 0);
+    Atomic<T> value = 102;
+    T const old = value.Swap(T(123));
+    BOOST_CHECK_EQUAL(old, 102);
     BOOST_CHECK_EQUAL(value, 123);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(CompareAndSwapSucceedTest, T, AtomicTypes)
 {
-    __declspec(align(8)) T value = 0;
+    Atomic<T> value = 0;
  
-    T const old = AtomicCompareAndSwap(value, T(123), T(0));
+    T const old = value.CompareAndSwap(T(123), T(0));
     BOOST_CHECK_EQUAL(old, 0);
     BOOST_CHECK_EQUAL(value, 123);
 
-    bool const swapped = AtomicCompareAndSwapTest(value, T(0), T(123));
+    bool const swapped = value.CompareAndSwapTest(T(0), T(123));
     BOOST_CHECK(swapped);
     BOOST_CHECK_EQUAL(value, 0);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(CompareAndSwapFailTest, T, AtomicTypes)
 {
-    __declspec(align(8)) T value = 0;
+    Atomic<T> value = 0;
  
-    T const old = AtomicCompareAndSwap(value, T(0), T(123));
+    T const old = value.CompareAndSwap(T(0), T(123));
     BOOST_CHECK_EQUAL(old, 0);
     BOOST_CHECK_EQUAL(value, 0);
 
-    bool const swapped = AtomicCompareAndSwapTest(value, T(0), T(123));
+    bool const swapped = value.CompareAndSwapTest(T(0), T(123));
     BOOST_CHECK(!swapped);
     BOOST_CHECK_EQUAL(value, 0);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(AddTest, T, AtomicAddTypes)
 {
-    __declspec(align(8)) T value = 0;
+    Atomic<T> value = 0;
    
-    T old = AtomicAdd(value, T(123));
+    T old = value.Add(T(123));
     BOOST_CHECK_EQUAL(old, 0);
     BOOST_CHECK_EQUAL(value, 123);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(IncrementTest, T, AtomicIncrementTypes)
 {
-    __declspec(align(8)) T value = 0;
+    Atomic<T> value = 0;
 
-    T old = AtomicIncrement(value);
+    T old = value.Increment();
     BOOST_CHECK_EQUAL(old, 0);
     BOOST_CHECK_EQUAL(value, 1);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(DecrementTest, T, AtomicIncrementTypes)
 {
-    __declspec(align(8)) T value = 1;
+    Atomic<T> value = 1;
 
-    T old = AtomicDecrement(value);
+    T old = value.Decrement();
     BOOST_CHECK_EQUAL(old, 1);
     BOOST_CHECK_EQUAL(value, 0);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(AndTest, T, AtomicAndTypes)
 {
-    __declspec(align(8)) T value = 0x48;
+    Atomic<T> value = 0x48;
 
-    T old = AtomicAnd(value, T(0x42));
+    T old = value.And(T(0x42));
     BOOST_CHECK_EQUAL(old, 0x48);
     BOOST_CHECK_EQUAL(value, 0x40);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(OrTest, T, AtomicOrTypes)
 {
-    __declspec(align(8)) T value = 0x40;
+    Atomic<T> value = 0x40;
 
-    T old = AtomicOr(value, T(0x08));
+    T old = value.Or(T(0x08));
     BOOST_CHECK_EQUAL(old, 0x40);
     BOOST_CHECK_EQUAL(value, 0x48);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(XorTest, T, AtomicXorTypes)
 {
-    __declspec(align(8)) T value = 0x48;
+    Atomic<T> value = 0x48;
 
-    T old = AtomicXor(value, T(0x28));
+    T old = value.Xor(T(0x28));
     BOOST_CHECK_EQUAL(old, 0x48);
     BOOST_CHECK_EQUAL(value, 0x60);
 }
