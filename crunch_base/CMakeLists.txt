@@ -1,4 +1,5 @@
 add_library(crunch_base_lib
+  include/crunch/base/align.hpp
   include/crunch/base/assert.hpp
   include/crunch/base/debug.hpp
   include/crunch/base/override.hpp
