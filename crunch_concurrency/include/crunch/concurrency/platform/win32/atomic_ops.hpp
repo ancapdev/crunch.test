@@ -45,7 +45,7 @@ namespace Detail
     template<typename T>
     struct AtomicLoadHelper<T, typename boost::enable_if<boost::mpl::less_equal<boost::mpl::sizeof_<T>, boost::mpl::sizeof_<void*>>>::type>
     {
-        static T Load(T volatile& src, MemoryOrder ordering)
+        static T Load(T volatile const& src, MemoryOrder ordering)
         {
             if (ordering == MEMORY_ORDER_SEQ_CST)
                 CRUNCH_COMPILER_FENCE();
@@ -57,6 +57,30 @@ namespace Detail
                 CRUNCH_COMPILER_FENCE();
             
             return result;
+        }
+    };
+
+    template<typename T>
+    struct AtomicLoadHelper<T, typename boost::enable_if<boost::mpl::equal_to<boost::mpl::sizeof_<T>, boost::mpl::size_t<16>>>::type>
+    {
+        static T Load(T volatile const& src, MemoryOrder ordering)
+        {
+            if (ordering == MEMORY_ORDER_SEQ_CST)
+                CRUNCH_COMPILER_FENCE();
+
+            union
+            {
+                T value;
+                __m128i sse;
+            } result;
+
+            result.sse = _mm_load_si128(reinterpret_cast<__m128i const*>(const_cast<T const*>(&src)));
+
+            if (ordering == MEMORY_ORDER_ACQUIRE ||
+                ordering == MEMORY_ORDER_SEQ_CST)
+                CRUNCH_COMPILER_FENCE();
+
+            return result.value;
         }
     };
 
@@ -221,11 +245,12 @@ namespace Detail
     };
 #endif
 
+
 #if defined (CRUNCH_ARCH_X86_32)
     template<typename T>
     struct AtomicLoadHelper<T, typename boost::enable_if<boost::mpl::equal_to<boost::mpl::sizeof_<T>, boost::mpl::size_t<8>>>::type>
     {
-        static T Load(T volatile& src, MemoryOrder ordering)
+        static T Load(T volatile const& src, MemoryOrder ordering)
         {
             if (ordering == MEMORY_ORDER_SEQ_CST)
                 CRUNCH_COMPILER_FENCE();
