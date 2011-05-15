@@ -1,5 +1,8 @@
 #include "crunch/concurrency/atomic.hpp"
 
+// TODO: remove
+#include "crunch/concurrency/lock_free_slist.hpp"
+
 #include <boost/mpl/list.hpp>
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
@@ -79,26 +82,22 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SwapTest, T, AtomicSwapTypes)
 BOOST_AUTO_TEST_CASE_TEMPLATE(CompareAndSwapSucceedTest, T, AtomicTypes)
 {
     Atomic<T> value = 0;
- 
-    T const old = value.CompareAndSwap(T(123), T(0));
-    BOOST_CHECK_EQUAL(old, 0);
-    BOOST_CHECK_EQUAL(value, 123);
 
-    bool const swapped = value.CompareAndSwapTest(T(0), T(123));
+    T cmp = 0;
+    bool const swapped = value.CompareAndSwap(123, cmp);
     BOOST_CHECK(swapped);
-    BOOST_CHECK_EQUAL(value, 0);
+    BOOST_CHECK_EQUAL(cmp, 0);
+    BOOST_CHECK_EQUAL(value, 123);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(CompareAndSwapFailTest, T, AtomicTypes)
 {
     Atomic<T> value = 0;
  
-    T const old = value.CompareAndSwap(T(0), T(123));
-    BOOST_CHECK_EQUAL(old, 0);
-    BOOST_CHECK_EQUAL(value, 0);
-
-    bool const swapped = value.CompareAndSwapTest(T(0), T(123));
+    T cmp = 123;
+    bool const swapped = value.CompareAndSwap(0, cmp);
     BOOST_CHECK(!swapped);
+    BOOST_CHECK_EQUAL(cmp, 0);
     BOOST_CHECK_EQUAL(value, 0);
 }
 

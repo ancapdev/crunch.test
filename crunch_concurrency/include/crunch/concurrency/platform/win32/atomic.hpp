@@ -3,7 +3,8 @@
 
 #include "crunch/base/platform.hpp"
 
-#include "crunch/concurrency/platform/win32/atomic_type.hpp"
+#include "crunch/concurrency/platform/win32/atomic_word.hpp"
+#include "crunch/concurrency/platform/win32/atomic_storage.hpp"
 
 #if defined (CRUNCH_ARCH_X86)
 #   include "crunch/concurrency/platform/win32/atomic_ops_x86.hpp"

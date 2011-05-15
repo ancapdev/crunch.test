@@ -2,11 +2,13 @@ if(WIN32)
   set(_platformFiles
     include/crunch/concurrency/platform/win32/atomic.hpp
     include/crunch/concurrency/platform/win32/atomic_ops_x86.hpp
-    include/crunch/concurrency/platform/win32/atomic_type.hpp)  
+    include/crunch/concurrency/platform/win32/atomic_storage.hpp
+    include/crunch/concurrency/platform/win32/atomic_word.hpp)
 endif()
 
 add_library(crunch_concurrency_lib
   include/crunch/concurrency/atomic.hpp
+  include/crunch/concurrency/lock_free_slist.hpp
   include/crunch/concurrency/event.hpp
   include/crunch/concurrency/fence.hpp
   include/crunch/concurrency/memory_order.hpp

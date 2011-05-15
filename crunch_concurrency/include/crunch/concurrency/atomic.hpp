@@ -12,11 +12,13 @@
 
 namespace Crunch { namespace Concurrency {
 
-template<typename T>
+template<typename T, typename W = typename Platform::AtomicWord<T>::Type>
 class AtomicBase
 {
 public:
     typedef T ValueType;
+    typedef W WordType;
+    typedef Platform::AtomicStorage<WordType> StorageType;
 
     void Store(ValueType value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST) volatile
     {
@@ -34,12 +36,15 @@ public:
 
     ValueType Swap(ValueType src, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST) volatile
     {
+        Converter src_;
+        src_.value = src;
+
         Converter result;
-        result.bits = Platform::AtomicSwap(mData.bits, src, ordering);
+        result.bits = Platform::AtomicSwap(mData.bits, src_.bits, ordering);
         return result.value;
     }
 
-    ValueType CompareAndSwap(ValueType src, ValueType cmp, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST) volatile
+    bool CompareAndSwap(ValueType src, ValueType& cmp, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST) volatile
     {
         Converter src_;
         src_.value = src;
@@ -47,20 +52,17 @@ public:
         Converter cmp_;
         cmp_.value = cmp;
 
-        Converter result;
-        result.bits = Platform::AtomicCompareAndSwap(mData.bits, src_.bits, cmp_.bits);
-        return result.value;
+        bool const result = Platform::AtomicCompareAndSwap(mData.bits, src_.bits, cmp_.bits, ordering);
+        cmp = cmp_.value;
+        return result;
     }
 
-    bool CompareAndSwapTest(ValueType src, ValueType cmp, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST) volatile
+    bool CompareAndSwap(ValueType src, WordType& cmp, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST) volatile
     {
         Converter src_;
         src_.value = src;
 
-        Converter cmp_;
-        cmp_.value = cmp;
-
-        return Platform::AtomicCompareAndSwapTest(mData.bits, src_.bits, cmp_.bits);
+        return Platform::AtomicCompareAndSwap(mData.bits, src_.bits, cmp, ordering);
     }
 
     operator ValueType () const volatile
@@ -75,16 +77,60 @@ public:
     }
 
 protected:
-    typedef Platform::AtomicType<sizeof(T)> StorageType;
-
     union Converter
     {
-        typename StorageType::Type bits;
+        WordType bits;
         ValueType value;
     };
 
     StorageType mData;
 };
+
+
+template<typename T>
+class AtomicBase<T, T>
+{
+public:
+    typedef T ValueType;
+    typedef T WordType;
+    typedef Platform::AtomicStorage<WordType> StorageType;
+
+
+    void Store(ValueType value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST) volatile
+    {
+        Platform::AtomicStore(mData.bits, value, ordering);
+    }
+
+    ValueType Load(MemoryOrder ordering =  MEMORY_ORDER_SEQ_CST) const volatile
+    {
+        return Platform::AtomicLoad(mData.bits, ordering);
+    }
+
+    ValueType Swap(ValueType src, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST) volatile
+    {
+        return Platform::AtomicSwap(mData.bits, src, ordering);
+    }
+
+    bool CompareAndSwap(ValueType src, ValueType& cmp, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST) volatile
+    {
+        return Platform::AtomicCompareAndSwap(mData.bits, src, cmp, ordering);
+    }
+
+    operator ValueType () const volatile
+    {
+        return Load();
+    }
+
+    ValueType operator=(ValueType value) volatile
+    {
+        Store();
+        return value;
+    }
+
+protected:
+    StorageType mData;
+};
+
 
 template<typename T, typename Enabler = void>
 class Atomic : public AtomicBase<T>
@@ -100,17 +146,10 @@ public:
     }
 };
 
-template<typename T>
-class Atomic<T, typename boost::enable_if<boost::is_integral<T>>::type> : public AtomicBase<T>
+template<typename T, typename W = typename Platform::AtomicWord<T>::Type>
+class AtomicIntegerBase : public AtomicBase<T, W>
 {
 public:
-    Atomic() {}
-
-    Atomic(ValueType value)
-    {
-        Store(value);
-    }
-
     ValueType Increment() volatile
     {
         Converter result;
@@ -173,6 +212,59 @@ public:
         Converter result;
         result.bits = Platform::AtomicXor(mData.bits, mask_.bits);
         return result.value;
+    }
+};
+
+template<typename T>
+class AtomicIntegerBase<T, T> : public AtomicBase<T, T>
+{
+public:
+    ValueType Increment() volatile
+    {
+        return Platform::AtomicIncrement(mData.bits);
+    }
+
+    ValueType Decrement() volatile
+    {
+        return Platform::AtomicDecrement(mData.bits);
+    }
+
+    ValueType Add(ValueType value) volatile
+    {
+        return Platform::AtomicAdd(mData.bits, value);
+    }
+
+    ValueType Sub(ValueType value) volatile
+    {
+        return Platform::AtomicSub(mData.bits, value);
+    }
+
+    ValueType And(ValueType mask) volatile
+    {
+        return Platform::AtomicAnd(mData.bits, mask);
+    }
+
+    ValueType Or(ValueType mask) volatile
+    {
+        return Platform::AtomicOr(mData.bits, mask);
+    }
+
+    ValueType Xor(ValueType mask) volatile
+    {
+        return Platform::AtomicXor(mData.bits, mask);
+    }
+};
+
+
+template<typename T>
+class Atomic<T, typename boost::enable_if<boost::is_integral<T>>::type> : public AtomicIntegerBase<T>
+{
+public:
+    Atomic() {}
+
+    Atomic(ValueType value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+    {
+        Store(value,  ordering);
     }
 
     ValueType operator++() volatile

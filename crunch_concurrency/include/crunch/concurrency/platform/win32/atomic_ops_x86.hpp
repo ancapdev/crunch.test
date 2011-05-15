@@ -54,6 +54,11 @@ namespace Detail
 #endif
     };
 
+    inline void AtomicStore(__m128i volatile& dst, __m128i src)
+    {
+        _mm_store_si128(const_cast<__m128i*>(&dst), src);
+    }
+
     inline void AtomicStoreSeqCst(char volatile& dst, char src)
     {
         CRUNCH_MEMORY_FENCE();
@@ -82,6 +87,13 @@ namespace Detail
         AtomicStore(dst, src);
         CRUNCH_MEMORY_FENCE();
 #endif
+    }
+
+    inline void AtomicStoreSeqCst(__m128i volatile& dst, __m128i src)
+    {
+        CRUNCH_MEMORY_FENCE();
+        AtomicStore(dst, src);
+        CRUNCH_MEMORY_FENCE();
     }
 }
 
@@ -134,54 +146,32 @@ inline __int64 AtomicSwap(__int64 volatile& dst, __int64 src, MemoryOrder = MEMO
 }
 #endif
 
-inline short AtomicCompareAndSwap(short volatile& dst, short src, short cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
+inline bool AtomicCompareAndSwap(short volatile& dst, short src, short& cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&dst, 2);
-    return _InterlockedCompareExchange16(&dst, src, cmp);
+    short cmp_ = cmp;
+    cmp = _InterlockedCompareExchange16(&dst, src, cmp);
+    return cmp_ == cmp;
 }
 
-inline bool AtomicCompareAndSwapTest(short volatile& dst, short src, short cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
-{
-    return AtomicCompareAndSwap(dst, src, cmp) == cmp;
-}
-
-inline long AtomicCompareAndSwap(long volatile& dst, long src, long cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
+inline bool AtomicCompareAndSwap(long volatile& dst, long src, long& cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&dst, 4);
-    return _InterlockedCompareExchange(&dst, src, cmp);
+    long cmp_ = cmp;
+    cmp = _InterlockedCompareExchange(&dst, src, cmp);
+    return cmp_ == cmp;
 }
 
-inline bool AtomicCompareAndSwapTest(long volatile& dst, long src, long cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
-{
-    return AtomicCompareAndSwap(dst, src, cmp) == cmp;
-}
-
-inline __int64 AtomicCompareAndSwap(__int64 volatile& dst, __int64 src, __int64 cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
+inline bool AtomicCompareAndSwap(__int64 volatile& dst, __int64 src, __int64& cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&dst, 8);
-    return _InterlockedCompareExchange64(&dst, src, cmp);
-}
-
-inline bool AtomicCompareAndSwapTest(__int64 volatile& dst, __int64 src, __int64 cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
-{
-    return AtomicCompareAndSwap(dst, src, cmp) == cmp;
+    __int64 cmp_ = cmp;
+    cmp = _InterlockedCompareExchange64(&dst, src, cmp);
+    return cmp_ == cmp;
 }
 
 #if defined (CRUNCH_ARCH_X86_64)
-inline __m128i AtomicCompareAndSwap(__m128i volatile& dst, __m128i src, __m128i cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
-{
-    CRUNCH_ASSERT_ALIGNMENT(&dst, 16);
-
-    _InterlockedCompareExchange128(
-        dst.m128i_i64,
-        src.m128i_i64[1],
-        src.m128i_i64[0],
-        cmp.m128i_i64);
-
-    return cmp;
-}
-
-inline bool AtomicCompareAndSwapTest(__m128i volatile& dst, __m128i src, __m128i cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
+inline bool AtomicCompareAndSwap(__m128i volatile& dst, __m128i src, __m128i& cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&dst, 16);
 
