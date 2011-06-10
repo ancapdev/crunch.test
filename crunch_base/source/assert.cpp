@@ -1,4 +1,5 @@
 #include "crunch/base/assert.hpp"
+#include "crunch/base/platform.hpp"
 
 #include <cstdarg>
 #include <cstdio>
@@ -38,7 +39,11 @@ bool HandleAssert(char const* condition, char const* file, int line, char const*
     va_list args;
     va_start(args, format);
 
+#if defined (CRUNCH_PLATFORM_WIN32)
     int count = vsprintf_s(buffer, format, args);
+#else
+    int count = vsprintf(buffer, format, args);
+#endif
 
     return GetAssertHandler()(condition, file, line, count < 0 ? "<assert format error>" : buffer);
 }
