@@ -4,6 +4,12 @@ if(WIN32)
     include/crunch/concurrency/platform/win32/atomic_ops_x86.hpp
     include/crunch/concurrency/platform/win32/atomic_storage.hpp
     include/crunch/concurrency/platform/win32/atomic_word.hpp)
+elif(UNIX)
+  set(_platformFiles
+    include/crunch/concurrency/platform/linux/atomic.hpp
+    include/crunch/concurrency/platform/linux/atomic_ops_x86.hpp
+    include/crunch/concurrency/platform/linux/atomic_storage.hpp
+    include/crunch/concurrency/platform/linux/atomic_word.hpp)
 endif()
 
 add_library(crunch_concurrency_lib

@@ -18,7 +18,7 @@ public:
         mRoot.Store(root);
     }
     
-    __declspec(noinline) void Push(T* node)
+    void Push(T* node)
     {
         union
         {

@@ -5,6 +5,8 @@
 
 #if defined (CRUNCH_PLATFORM_WIN32)
 #   include "crunch/concurrency/platform/win32/atomic.hpp"
+#elif defined (CRUNCH_PLATFORM_LINUX)
+#   include "crunch/concurrency/platform/linux/atomic.hpp"
 #endif
 
 #include <boost/utility/enable_if.hpp>
@@ -140,7 +142,7 @@ public:
 
     Atomic() {};
 
-    Atomic(ValueType value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+    Atomic(T value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
     {
         Store(value,  ordering);
     }
@@ -150,67 +152,67 @@ template<typename T, typename W = typename Platform::AtomicWord<T>::Type>
 class AtomicIntegerBase : public AtomicBase<T, W>
 {
 public:
-    ValueType Increment() volatile
+    T Increment() volatile
     {
-        Converter result;
-        result.bits = Platform::AtomicIncrement(mData.bits);
+        typename AtomicBase<T, W>::Converter result;
+        result.bits = Platform::AtomicIncrement(this->mData.bits);
         return result.value;
     }
 
-    ValueType Decrement() volatile
+    T Decrement() volatile
     {
-        Converter result;
-        result.bits = Platform::AtomicDecrement(mData.bits);
+        typename AtomicBase<T, W>::Converter result;
+        result.bits = Platform::AtomicDecrement(this->mData.bits);
         return result.value;
     }
 
-    ValueType Add(ValueType value) volatile
+    T Add(T value) volatile
     {
-        Converter value_;
+        typename AtomicBase<T, W>::Converter value_;
         value_.value = value;
 
-        Converter result;
-        result.bits = Platform::AtomicAdd(mData.bits, value_.bits);
+        typename AtomicBase<T, W>::Converter result;
+        result.bits = Platform::AtomicAdd(this->mData.bits, value_.bits);
         return result.value;
     }
 
-    ValueType Sub(ValueType value) volatile
+    T Sub(T value) volatile
     {
-        Converter value_;
+        typename AtomicBase<T, W>::Converter value_;
         value_.value = value;
 
-        Converter result;
-        result.bits = Platform::AtomicSub(mData.bits, value_.bits);
+        typename AtomicBase<T, W>::Converter result;
+        result.bits = Platform::AtomicSub(this->mData.bits, value_.bits);
         return result.value;
     }
 
-    ValueType And(ValueType mask) volatile
+    T And(T mask) volatile
     {
-        Converter mask_;
+        typename AtomicBase<T, W>::Converter mask_;
         mask_.value = mask;
 
-        Converter result;
-        result.bits = Platform::AtomicAnd(mData.bits, mask_.bits);
+        typename AtomicBase<T, W>::Converter result;
+        result.bits = Platform::AtomicAnd(this->mData.bits, mask_.bits);
         return result.value;
     }
 
-    ValueType Or(ValueType mask) volatile
+    T Or(T mask) volatile
     {
-        Converter mask_;
+        typename AtomicBase<T, W>::Converter mask_;
         mask_.value = mask;
 
-        Converter result;
-        result.bits = Platform::AtomicOr(mData.bits, mask_.bits);
+        typename AtomicBase<T, W>::Converter result;
+        result.bits = Platform::AtomicOr(this->mData.bits, mask_.bits);
         return result.value;
     }
 
-    ValueType Xor(ValueType mask) volatile
+    T Xor(T mask) volatile
     {
-        Converter mask_;
+        typename AtomicBase<T, W>::Converter mask_;
         mask_.value = mask;
 
-        Converter result;
-        result.bits = Platform::AtomicXor(mData.bits, mask_.bits);
+        typename AtomicBase<T, W>::Converter result;
+        result.bits = Platform::AtomicXor(this->mData.bits, mask_.bits);
         return result.value;
     }
 };
@@ -219,39 +221,39 @@ template<typename T>
 class AtomicIntegerBase<T, T> : public AtomicBase<T, T>
 {
 public:
-    ValueType Increment() volatile
+    T Increment() volatile
     {
-        return Platform::AtomicIncrement(mData.bits);
+        return Platform::AtomicIncrement(this->mData.bits);
     }
 
-    ValueType Decrement() volatile
+    T Decrement() volatile
     {
-        return Platform::AtomicDecrement(mData.bits);
+        return Platform::AtomicDecrement(this->mData.bits);
     }
 
-    ValueType Add(ValueType value) volatile
+    T Add(T value) volatile
     {
-        return Platform::AtomicAdd(mData.bits, value);
+        return Platform::AtomicAdd(this->mData.bits, value);
     }
 
-    ValueType Sub(ValueType value) volatile
+    T Sub(T value) volatile
     {
-        return Platform::AtomicSub(mData.bits, value);
+        return Platform::AtomicSub(this->mData.bits, value);
     }
 
-    ValueType And(ValueType mask) volatile
+    T And(T mask) volatile
     {
-        return Platform::AtomicAnd(mData.bits, mask);
+        return Platform::AtomicAnd(this->mData.bits, mask);
     }
 
-    ValueType Or(ValueType mask) volatile
+    T Or(T mask) volatile
     {
-        return Platform::AtomicOr(mData.bits, mask);
+        return Platform::AtomicOr(this->mData.bits, mask);
     }
 
-    ValueType Xor(ValueType mask) volatile
+    T Xor(T mask) volatile
     {
-        return Platform::AtomicXor(mData.bits, mask);
+        return Platform::AtomicXor(this->mData.bits, mask);
     }
 };
 
@@ -262,39 +264,39 @@ class Atomic<T, typename boost::enable_if<boost::is_integral<T>>::type> : public
 public:
     Atomic() {}
 
-    Atomic(ValueType value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+    Atomic(T value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
     {
         Store(value,  ordering);
     }
 
-    ValueType operator++() volatile
+    T operator++() volatile
     {
-        return Increment() + 1;
+        return this->Increment() + 1;
     }
 
-    ValueType operator++(int)  volatile
+    T operator++(int)  volatile
     {
-        return Increment();
+        return this->Increment();
     }
 
-    ValueType operator--() volatile
+    T operator--() volatile
     {
-        return Increment() - 1;
+        return this->Increment() - 1;
     }
 
-    ValueType operator--(int)  volatile
+    T operator--(int)  volatile
     {
-        return Increment();
+        return this->Increment();
     }
 
-    ValueType operator += (ValueType value) volatile
+    T operator += (T value) volatile
     {
-        return Add(value) + value;
+        return this->Add(value) + value;
     }
 
-    ValueType operator -= (ValueType value) volatile
+    T operator -= (T value) volatile
     {
-        return Sub(value) - value;
+        return this->Sub(value) - value;
     }
 };
 
@@ -313,21 +315,21 @@ class Atomic<T*> : public AtomicBase<T*>
 
     T* Add(std::ptrdiff_t value) volatile
     {
-        Converter value_;
+        typename AtomicBase<T*>::Converter value_;
         value_.value = value * sizeof(T);
 
-        Converter result;
-        result.bits = Platform::AtomicAdd(mData.bits, value_.bits);
+        typename AtomicBase<T*>::Converter result;
+        result.bits = Platform::AtomicAdd(this->mData.bits, value_.bits);
         return result.value;
     }
 
     T* Sub(std::ptrdiff_t value) volatile
     {
-        Converter value_;
+        typename AtomicBase<T*>::Converter value_;
         value_.value = value * sizeof(T);
 
-        Converter result;
-        result.bits = Platform::AtomicSub(mData.bits, value_.bits);
+        typename AtomicBase<T*>::Converter result;
+        result.bits = Platform::AtomicSub(this->mData.bits, value_.bits);
         return result.value;
     }
 
