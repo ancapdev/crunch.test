@@ -6,6 +6,13 @@ cmake_minimum_required(VERSION 2.8)
 if(MSVC)
   add_definitions("-D_WIN32_WINNT=0x0501")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+else()
+  add_definitions("-Dnullptr=NULL")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+  if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+    # Enable cmpxchg16
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcx16")
+  endif()
 endif()
 
 #
@@ -13,8 +20,11 @@ endif()
 #
 if(WIN32)
   set(PLATFORM_NAME "win32")
+elseif(UNIX)
+  set(PLATFORM_NAME "linux")
+else()
+  message(FATAL_ERROR "Unknown platform")
 endif()
-
 
 #
 # boost package
