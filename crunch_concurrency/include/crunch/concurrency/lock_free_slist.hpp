@@ -2,6 +2,7 @@
 #define CRUNCH_CONCURRENCY_LOCK_FREE_SLIST_HPP
 
 #include "crunch/concurrency/atomic.hpp"
+#include "crunch/concurrency/yield.hpp"
 
 #include <cstdint>
 
@@ -28,6 +29,8 @@ public:
 
         oldRoot.value = mRoot.Load(MEMORY_ORDER_RELAXED);
 
+        ExponentialBackoff backoff;
+
         for (;;)
         {
             node->next.Store(oldRoot.value.object, MEMORY_ORDER_RELAXED);
@@ -36,6 +39,8 @@ public:
 
             if (mRoot.CompareAndSwap(newRoot, oldRoot.bits, MEMORY_ORDER_RELEASE))
                 break;
+
+            backoff.Pause();
         }
     }
 

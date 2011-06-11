@@ -4,7 +4,7 @@ if(WIN32)
     include/crunch/concurrency/platform/win32/atomic_ops_x86.hpp
     include/crunch/concurrency/platform/win32/atomic_storage.hpp
     include/crunch/concurrency/platform/win32/atomic_word.hpp)
-elif(UNIX)
+elseif(UNIX)
   set(_platformFiles
     include/crunch/concurrency/platform/linux/atomic.hpp
     include/crunch/concurrency/platform/linux/atomic_ops_x86.hpp
@@ -21,6 +21,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/meta_scheduler.hpp
   include/crunch/concurrency/scheduler.hpp
   include/crunch/concurrency/waitable.hpp
+  include/crunch/concurrency/yield.hpp
   source/event.cpp
   source/meta_scheduler.cpp
   ${_platformFiles})
