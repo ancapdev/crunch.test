@@ -12,7 +12,7 @@
 #       pragma intrinsic(_mm_pause)
 #       define CRUNCH_PAUSE() _mm_pause()
 #   elif defined (CRUNCH_COMPILER_GCC)
-#       define CRUNCH_PAUSE __asm__ __volatile__("pause;");
+#       define CRUNCH_PAUSE() __asm__ __volatile__("pause;");
 #   endif
 #endif
 
