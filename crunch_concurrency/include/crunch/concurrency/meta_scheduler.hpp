@@ -79,7 +79,7 @@ private:
     ContextList mContexts;
     boost::mutex mContextsLock;
 
-    CRUNCH_THREAD_LOCAL static Context* tCurrentContext;
+    static CRUNCH_THREAD_LOCAL Context* tCurrentContext;
 };
 
 }}
