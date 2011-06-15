@@ -13,8 +13,12 @@ struct Waiter
 struct IWaitable
 {
     virtual void AddWaiter(Waiter* waiter) = 0;
+
+    // Must not return until any callbacks on waiter has completed
     virtual void RemoveWaiter(Waiter* waiter) = 0;
+
     virtual bool IsOrderDependent() const = 0;
+
     virtual ~IWaitable() { }
 };
 

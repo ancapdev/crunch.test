@@ -20,6 +20,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/memory_order.hpp
   include/crunch/concurrency/meta_scheduler.hpp
   include/crunch/concurrency/scheduler.hpp
+  include/crunch/concurrency/thread_local.hpp
   include/crunch/concurrency/waitable.hpp
   include/crunch/concurrency/yield.hpp
   source/event.cpp
