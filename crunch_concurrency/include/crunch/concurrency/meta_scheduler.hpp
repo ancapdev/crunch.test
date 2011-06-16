@@ -1,14 +1,13 @@
 #ifndef CRUNCH_CONCURRENCY_META_SCHEDULER_HPP
 #define CRUNCH_CONCURRENCY_META_SCHEDULER_HPP
 
+#include "crunch/base/stdint.hpp"
 #include "crunch/concurrency/scheduler.hpp"
 #include "crunch/concurrency/thread_local.hpp"
 #include "crunch/concurrency/waitable.hpp"
+#include "crunch/concurrency/detail/system_mutex.hpp"
 
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/mutex.hpp>
-
+#include <memory>
 #include <vector>
 
 namespace Crunch { namespace Concurrency {
@@ -20,7 +19,7 @@ namespace Crunch { namespace Concurrency {
 class MetaScheduler
 {
 public:
-    typedef boost::shared_ptr<IScheduler> SchedulerPtr;
+    typedef std::shared_ptr<IScheduler> SchedulerPtr;
     typedef std::vector<SchedulerPtr> SchedulerList;
 
     MetaScheduler(SchedulerList const& schedulers);
@@ -30,11 +29,11 @@ public:
     public:
         ThreadConfig() : mAffinity(0xfffffffful) {}
 
-        void SetAffinity(boost::uint32_t affinity) { mAffinity = affinity; }
-        boost::uint32_t GetAffinity() const { return mAffinity; }
+        void SetAffinity(uint32 affinity) { mAffinity = affinity; }
+        uint32 GetAffinity() const { return mAffinity; }
 
     private:
-        boost::uint32_t mAffinity;
+        uint32 mAffinity;
     };
     
     void Join(ThreadConfig const& config);
@@ -70,14 +69,15 @@ public:
 
 private:
     class Context;
+    typedef std::unique_ptr<Context> ContextPtr;
 
-    typedef boost::ptr_vector<Context> ContextList;
+    typedef std::vector<ContextPtr> ContextList;
 
     SchedulerList mSchedulers;
-    boost::mutex mSchedulersLock;
+    Detail::SystemMutex mSchedulersLock;
 
     ContextList mContexts;
-    boost::mutex mContextsLock;
+    Detail::SystemMutex mContextsLock;
 
     static CRUNCH_THREAD_LOCAL Context* tCurrentContext;
 };

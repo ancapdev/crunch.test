@@ -4,9 +4,6 @@
 #include "crunch/base/stack_alloc.hpp"
 #include "crunch/concurrency/event.hpp"
 
-
-#include <boost/foreach.hpp>
-
 #include <algorithm>
 
 #if defined (CRUNCH_PLATFORM_WIN32)
@@ -148,9 +145,9 @@ void MetaScheduler::Join(ThreadConfig const& config)
     CRUNCH_ASSERT_ALWAYS(tCurrentContext == nullptr);
 
     // Set up thread specific data
-    Context* context = new Context(*this);
-    mContexts.push_back(context);
-    tCurrentContext = context;
+    ContextPtr context(new Context(*this));
+    tCurrentContext = context.get();
+    mContexts.push_back(std::move(context));
 }
 
 void MetaScheduler::Leave()
