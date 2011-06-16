@@ -3,14 +3,16 @@ if(WIN32)
     include/crunch/concurrency/platform/win32/atomic.hpp
     include/crunch/concurrency/platform/win32/atomic_ops_x86.hpp
     include/crunch/concurrency/platform/win32/atomic_storage.hpp
-    include/crunch/concurrency/platform/win32/atomic_word.hpp)
+    include/crunch/concurrency/platform/win32/atomic_word.hpp
+    source/platform/win32/yield.cpp)
 elseif(UNIX)
   set(_platformFiles
     include/crunch/concurrency/platform/linux/atomic.hpp
     include/crunch/concurrency/platform/linux/atomic_ops_x86.hpp
     include/crunch/concurrency/platform/linux/atomic_storage.hpp
     include/crunch/concurrency/platform/linux/atomic_word.hpp
-    source/platform/linux/system_mutex.cpp)
+    source/platform/linux/system_mutex.cpp
+    source/platform/linux/yield.cpp)
 endif()
 
 add_library(crunch_concurrency_lib
@@ -22,6 +24,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/memory_order.hpp
   include/crunch/concurrency/meta_scheduler.hpp
   include/crunch/concurrency/scheduler.hpp
+  include/crunch/concurrency/thread.hpp
   include/crunch/concurrency/thread_local.hpp
   include/crunch/concurrency/waitable.hpp
   include/crunch/concurrency/yield.hpp

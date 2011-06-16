@@ -3,8 +3,6 @@
 
 #include "crunch/concurrency/waitable.hpp"
 
-#include <boost/function.hpp>
-
 namespace Crunch { namespace Concurrency {
     
 struct ISchedulerContext

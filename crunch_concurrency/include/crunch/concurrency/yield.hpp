@@ -3,9 +3,6 @@
 
 #include "crunch/base/platform.hpp"
 
-#include <boost/thread/thread.hpp>
-
-
 #if defined (CRUNCH_ARCH_X86)
 #   if defined (CRUNCH_COMPILER_MSVC) && defined (CRUNCH_ARCH_X86)
         extern "C" void _mm_pause();
@@ -18,6 +15,9 @@
 
 namespace Crunch { namespace Concurrency {
 
+/// Yield scheduler to another thread
+void ThreadYield();
+
 #if defined (CRUNCH_ARCH_X86)
 inline void Pause(int count)
 {
@@ -25,7 +25,6 @@ inline void Pause(int count)
         CRUNCH_PAUSE();
 }
 #endif
-
 
 class ExponentialBackoff
 {
@@ -46,7 +45,7 @@ public:
         }
         else
         {
-            boost::this_thread::yield();
+            ThreadYield();
         }
     }
 
