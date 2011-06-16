@@ -3,7 +3,7 @@
 
 #include "crunch/base/debug.hpp"
 
-#include <boost/function.hpp>
+#include <functional>
 
 namespace Crunch {
 
@@ -11,7 +11,7 @@ namespace Crunch {
 /// \param file The file the assert was triggered from.
 /// \param line The line in the file the assert was triggered from.
 /// \param message A message describing the assertion. Can be null.
-typedef boost::function<bool (char const* condition, char const* file, int line, char const* message)> AssertHandler;
+typedef std::function<bool (char const* condition, char const* file, int line, char const* message)> AssertHandler;
 
 void SetAssertHandler(AssertHandler const& handler);
 AssertHandler const& GetAssertHandler();
