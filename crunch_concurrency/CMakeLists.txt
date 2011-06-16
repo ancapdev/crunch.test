@@ -48,7 +48,6 @@ add_executable(crunch_concurrency_test
   test/meta_scheduler_tests.cpp)
 
 target_link_libraries(crunch_concurrency_test
-  crunch_concurrency_lib
-  ${Boost_LIBRARIES})
+  crunch_concurrency_lib)
 
 crunch_add_test(crunch_concurrency_test)
