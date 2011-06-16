@@ -15,7 +15,7 @@ void Event::AddWaiter(Waiter* waiter)
     }
     else
     {
-        boost::mutex::scoped_lock lock(mMutex);            
+        Detail::SystemMutex::ScopedLock lock(mMutex);            
         waiter->next = mRootWaiter;
         mRootWaiter = waiter;
     }
@@ -23,7 +23,7 @@ void Event::AddWaiter(Waiter* waiter)
 
 void Event::RemoveWaiter(Waiter* waiter)
 {
-    boost::mutex::scoped_lock lock(mMutex);
+    Detail::SystemMutex::ScopedLock lock(mMutex);
 
     if (waiter == mRootWaiter)
     {
@@ -54,7 +54,7 @@ void Event::Set()
     if (mState)
         return;
 
-    boost::mutex::scoped_lock lock(mMutex);
+    Detail::SystemMutex::ScopedLock lock(mMutex);
     mState = true;
     Waiter* waiter = mRootWaiter;
     mRootWaiter = NULL;
@@ -74,7 +74,7 @@ void Event::Clear()
         return;
 
     // Take lock so we don't flip state while signaling waiters
-    boost::mutex::scoped_lock lock(mMutex);
+    Detail::SystemMutex::ScopedLock lock(mMutex);
     mState = false;
 }
 

@@ -1,7 +1,6 @@
 #include "crunch/base/override.hpp"
 #include "crunch/concurrency/waitable.hpp"
-
-#include <boost/thread/mutex.hpp>
+#include "crunch/concurrency/detail/system_mutex.hpp"
 
 namespace Crunch { namespace Concurrency {
 
@@ -20,7 +19,7 @@ public:
 
 private:
     volatile bool mState;
-    boost::mutex mMutex;
+    Detail::SystemMutex mMutex;
     Waiter* mRootWaiter;
 };
 
