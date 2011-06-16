@@ -9,8 +9,7 @@
 #   include "crunch/concurrency/platform/linux/atomic.hpp"
 #endif
 
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_integral.hpp>
+#include <type_traits>
 
 namespace Crunch { namespace Concurrency {
 
@@ -259,7 +258,7 @@ public:
 
 
 template<typename T>
-class Atomic<T, typename boost::enable_if<boost::is_integral<T>>::type> : public AtomicIntegerBase<T>
+class Atomic<T, typename std::enable_if<std::is_integral<T>::value, void>::type> : public AtomicIntegerBase<T>
 {
 public:
     Atomic() {}
