@@ -1,7 +1,5 @@
 #include "crunch/concurrency/atomic.hpp"
-
-// TODO: remove
-#include "crunch/concurrency/lock_free_slist.hpp"
+#include "crunch/base/stdint.hpp"
 
 #include <boost/mpl/list.hpp>
 #include <boost/test/test_tools.hpp>
@@ -10,44 +8,44 @@
 namespace Crunch { namespace Concurrency {
 
 typedef boost::mpl::list<
-    boost::int16_t,
-    boost::uint16_t,
-    boost::int32_t,
-    boost::uint32_t,
-    boost::int64_t,
-    boost::uint64_t> AtomicTypes;
+    int16,
+    uint16,
+    int32,
+    uint32,
+    int64,
+    uint64> AtomicTypes;
 
 typedef boost::mpl::list<
 #if defined (CRUNCH_ARCH_X86_64)
-    boost::int64_t,
-    boost::uint64_t,
+    int64,
+    uint64,
 #endif
-    boost::int32_t,
-    boost::uint32_t> AtomicSwapTypes;
+    int32,
+    uint32> AtomicSwapTypes;
 
 typedef AtomicSwapTypes AtomicAddTypes;
 
 typedef boost::mpl::list<
 #if defined (CRUNCH_ARCH_X86_64)
-    boost::int64_t,
-    boost::uint64_t,
+    int64,
+    uint64,
 #endif
-    boost::int16_t,
-    boost::uint16_t,
-    boost::int32_t,
-    boost::uint32_t> AtomicIncrementTypes;
+    int16,
+    uint16,
+    int32,
+    uint32> AtomicIncrementTypes;
 
 typedef boost::mpl::list<
 #if defined (CRUNCH_ARCH_X86_64)
-    boost::int64_t,
-    boost::uint64_t,
+    int64,
+    uint64,
 #endif
-    boost::int8_t,
-    boost::uint8_t,
-    boost::int16_t,
-    boost::uint16_t,
-    boost::int32_t,
-    boost::uint32_t> AtomicAndTypes;
+    int8,
+    uint8,
+    int16,
+    uint16,
+    int32,
+    uint32> AtomicAndTypes;
 
 typedef AtomicAndTypes AtomicOrTypes;
 typedef AtomicAndTypes AtomicXorTypes;
