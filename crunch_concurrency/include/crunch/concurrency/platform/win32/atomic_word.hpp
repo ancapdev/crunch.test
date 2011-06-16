@@ -1,9 +1,9 @@
 #ifndef CRUNCH_CONCURRENCY_PLATFORM_WIN32_ATOMIC_TYPE_HPP
 #define CRUNCH_CONCURRENCY_PLATFORM_WIN32_ATOMIC_TYPE_HPP
 
-#include <boost/static_assert.hpp>
-
 #include <emmintrin.h>
+
+#include <cstddef>
 
 namespace Crunch { namespace Concurrency { namespace Platform {
 
@@ -14,11 +14,11 @@ template<> struct AtomicWordHelper<4> { typedef long Type; };
 template<> struct AtomicWordHelper<8> { typedef __int64 Type; };
 template<> struct AtomicWordHelper<16> { typedef __m128i Type; };
 
-BOOST_STATIC_ASSERT(sizeof(AtomicWordHelper<1>::Type) == 1);
-BOOST_STATIC_ASSERT(sizeof(AtomicWordHelper<2>::Type) == 2);
-BOOST_STATIC_ASSERT(sizeof(AtomicWordHelper<4>::Type) == 4);
-BOOST_STATIC_ASSERT(sizeof(AtomicWordHelper<8>::Type) == 8);
-BOOST_STATIC_ASSERT(sizeof(AtomicWordHelper<16>::Type) == 16);
+static_assert(sizeof(AtomicWordHelper<1>::Type) == 1, "Unexpected AtomicWord size");
+static_assert(sizeof(AtomicWordHelper<2>::Type) == 2, "Unexpected AtomicWord size");
+static_assert(sizeof(AtomicWordHelper<4>::Type) == 4, "Unexpected AtomicWord size");
+static_assert(sizeof(AtomicWordHelper<8>::Type) == 8, "Unexpected AtomicWord size");
+static_assert(sizeof(AtomicWordHelper<16>::Type) == 16, "Unexpected AtomicWord size");
 
 template<typename T> struct AtomicWord : AtomicWordHelper<sizeof(T)> {};
 
