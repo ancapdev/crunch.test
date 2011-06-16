@@ -4,6 +4,7 @@ if(WIN32)
     include/crunch/concurrency/platform/win32/atomic_ops_x86.hpp
     include/crunch/concurrency/platform/win32/atomic_storage.hpp
     include/crunch/concurrency/platform/win32/atomic_word.hpp
+    source/platform/win32/system_mutex.cpp
     source/platform/win32/yield.cpp)
 elseif(UNIX)
   set(_platformFiles
@@ -43,7 +44,8 @@ endif()
 add_executable(crunch_concurrency_test
   test/atomic_tests.cpp
   test/event_tests.cpp
-  test/main.cpp)
+  test/main.cpp
+  test/meta_scheduler_tests.cpp)
 
 target_link_libraries(crunch_concurrency_test
   crunch_concurrency_lib

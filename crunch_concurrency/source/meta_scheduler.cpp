@@ -140,6 +140,13 @@ struct ContextRunState : Waiter
     }
 };
 
+MetaScheduler::MetaScheduler(const SchedulerList& schedulers)
+    : mSchedulers(schedulers)
+{}
+
+MetaScheduler::~MetaScheduler()
+{}
+
 void MetaScheduler::Join(ThreadConfig const& config)
 {
     CRUNCH_ASSERT_ALWAYS(tCurrentContext == nullptr);

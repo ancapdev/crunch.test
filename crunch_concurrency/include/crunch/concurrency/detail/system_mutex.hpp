@@ -6,6 +6,8 @@
 
 #if defined (CRUNCH_PLATFORM_LINUX)
 #   include <pthread.h>
+#elif defined (CRUNCH_PLATFORM_WIN32)
+#   include <windows.h>
 #else
 #   error "Unsupported platform"
 #endif
@@ -30,6 +32,8 @@ public:
 private:
 #if defined (CRUNCH_PLATFORM_LINUX)
     pthread_mutex_t mMutex;
+#elif defined (CRUNCH_PLATFORM_WIN32)
+    CRITICAL_SECTION mCriticalSection;
 #endif
 };
 

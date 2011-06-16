@@ -23,6 +23,7 @@ public:
     typedef std::vector<SchedulerPtr> SchedulerList;
 
     MetaScheduler(SchedulerList const& schedulers);
+    ~MetaScheduler();
 
     class ThreadConfig
     {
