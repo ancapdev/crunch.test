@@ -265,7 +265,7 @@ public:
 
     Atomic(T value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
     {
-        Store(value,  ordering);
+        Store(value, ordering);
     }
 
     T operator++() volatile
@@ -302,6 +302,14 @@ public:
 template<typename T>
 class Atomic<T*> : public AtomicBase<T*>
 {
+public:
+    Atomic() {}
+
+    Atomic(T* value, MemoryOrder ordering = MEMORY_ORDER_SEQ_CST)
+    {
+        Store(value, ordering);
+    }
+
     T* Increment() volatile
     {
         return Add(1);
