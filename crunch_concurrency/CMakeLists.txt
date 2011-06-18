@@ -1,21 +1,11 @@
-if(WIN32)
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
   set(_platformFiles
-    include/crunch/concurrency/platform/win32/atomic.hpp
-    include/crunch/concurrency/platform/win32/atomic_ops_x86.hpp
-    include/crunch/concurrency/platform/win32/atomic_storage.hpp
-    include/crunch/concurrency/platform/win32/atomic_word.hpp
-    source/platform/win32/system_mutex.cpp
-    source/platform/win32/yield.cpp)
-elseif(UNIX)
-  set(_platformFiles
-    include/crunch/concurrency/platform/linux/atomic.hpp
-    include/crunch/concurrency/platform/linux/atomic_ops_x86.hpp
-    include/crunch/concurrency/platform/linux/atomic_storage.hpp
-    include/crunch/concurrency/platform/linux/atomic_word.hpp
-    source/platform/linux/system_mutex.cpp
-    source/platform/linux/yield.cpp)
+    include/crunch/concurrency/platform/${PLATFORM_NAME}/atomic.hpp
+    include/crunch/concurrency/platform/${PLATFORM_NAME}/atomic_ops_x86.hpp
+    include/crunch/concurrency/platform/${PLATFORM_NAME}/atomic_storage.hpp
+    include/crunch/concurrency/platform/${PLATFORM_NAME}/atomic_word.hpp)
 endif()
-
+    
 add_library(crunch_concurrency_lib
   include/crunch/concurrency/atomic.hpp
   include/crunch/concurrency/lock_free_slist.hpp
@@ -28,9 +18,13 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/thread_local.hpp
   include/crunch/concurrency/waitable.hpp
   include/crunch/concurrency/yield.hpp
+  include/crunch/concurrency/detail/system_event.hpp
   include/crunch/concurrency/detail/system_mutex.hpp
   source/event.cpp
   source/meta_scheduler.cpp
+  source/platform/${PLATFORM_NAME}/system_event.cpp
+  source/platform/${PLATFORM_NAME}/system_mutex.cpp
+  source/platform/${PLATFORM_NAME}/yield.cpp
   ${_platformFiles})
 
 target_link_libraries(crunch_concurrency_lib
