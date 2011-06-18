@@ -4,6 +4,10 @@
 
 namespace Crunch { namespace Concurrency {
 
+// TODO: Make AddWaiter run concurrently with RemoveWaiter by having RemoveWaiter
+//       reset the list on lock and and concatenate the old and new list on unlock.
+//       Complexity O(N) in the number of waiters in the original list
+//       Already the same for actual removal
 class Event : public IWaitable
 {
 public:
