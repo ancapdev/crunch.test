@@ -4,12 +4,9 @@
 #include "crunch/base/override.hpp"
 #include "crunch/base/stack_alloc.hpp"
 #include "crunch/concurrency/event.hpp"
+#include "crunch/concurrency/detail/system_event.hpp"
 
 #include <algorithm>
-
-#if defined (CRUNCH_PLATFORM_WIN32)
-#   include <windows.h>
-#endif
 
 namespace Crunch { namespace Concurrency {
 
@@ -18,48 +15,26 @@ class MetaScheduler::Context : Waiter
 public:
     Context(MetaScheduler& owner)
         : mOwner(owner)
-#if defined (CRUNCH_PLATFORM_WIN32)
-        , mEvent(CreateEvent(NULL, TRUE, FALSE, NULL))
-#endif
-    {
-#if defined (CRUNCH_PLATFORM_WIN32)
-        CRUNCH_ASSERT_ALWAYS(mEvent != NULL);
-#endif
-    }
-
-    ~Context()
-    {
-#if defined (CRUNCH_PLATFORM_WIN32)
-        CloseHandle(mEvent);
-#endif
-    }
+        , mEvent(false)
+    {}
 
     void WaitFor(IWaitable& waitable)
     {
         // TODO: Let active scheduler handle the wait if it can
         // TODO: Keep in mind if active scheduler is a fiber scheduler we might come back on a different system thread.. (and this thread might be used for other things.. i.e. waiter must be stack local)
-#if defined (CRUNCH_PLATFORM_WIN32)
-        ResetEvent(mEvent);
-#endif
+        mEvent.Reset();
         waitable.AddWaiter(this);
-#if defined (CRUNCH_PLATFORM_WIN32)
-        WaitForSingleObject(mEvent, INFINITE);
-#endif
+        mEvent.Wait();
     }
 
     virtual void Notify() CRUNCH_OVERRIDE
     {
-#if defined (CRUNCH_PLATFORM_WIN32)
-        SetEvent(mEvent);
-#endif
+        mEvent.Set();
     }
 
 private:
     MetaScheduler& mOwner;
-
-#if  defined (CRUNCH_PLATFORM_WIN32)
-    HANDLE mEvent;
-#endif
+    Detail::SystemEvent mEvent;
 };
 
 void MetaScheduler::WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
