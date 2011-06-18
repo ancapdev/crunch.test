@@ -16,7 +16,7 @@ namespace Crunch { namespace Concurrency { namespace Detail {
 class SystemEvent
 {
 public:
-    SystemEvent();
+    SystemEvent(bool initialState = false);
     ~SystemEvent();
 
     void Set();
@@ -30,7 +30,7 @@ private:
     // TODO: more efficient implementation with futexes
     pthread_mutex_t mMutex;
     pthread_cond_t mCondition;
-    bool mState;
+    volatile bool mState;
 #endif
 };
 

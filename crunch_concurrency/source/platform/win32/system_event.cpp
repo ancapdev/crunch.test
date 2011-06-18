@@ -3,8 +3,8 @@
 
 namespace Crunch { namespace Concurrency { namespace Detail {
 
-SystemEvent::SystemEvent()
-    : mEvent(CreateEvent(NULL, TRUE, FALSE, NULL))
+SystemEvent::SystemEvent(bool initialState)
+    : mEvent(CreateEvent(NULL, TRUE, initialState ? TRUE : FALSE, NULL))
 {}
 
 SystemEvent::~SystemEvent()
