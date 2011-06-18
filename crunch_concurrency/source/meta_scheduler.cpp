@@ -1,6 +1,7 @@
 #include "crunch/concurrency/meta_scheduler.hpp"
 
 #include "crunch/base/assert.hpp"
+#include "crunch/base/override.hpp"
 #include "crunch/base/stack_alloc.hpp"
 #include "crunch/concurrency/event.hpp"
 
@@ -46,7 +47,7 @@ public:
 #endif
     }
 
-    virtual void Wakeup()
+    virtual void Notify() CRUNCH_OVERRIDE
     {
 #if defined (CRUNCH_PLATFORM_WIN32)
         SetEvent(mEvent);
@@ -100,12 +101,16 @@ void MetaScheduler::WaitForAny(IWaitable** waitables, std::size_t count, WaitMod
 {
     struct WaiterHelper : Waiter
     {
-        virtual void Wakeup()
+        WaiterHelper(Event& event)
+            : event(event)
+        {}
+
+        virtual void Notify() CRUNCH_OVERRIDE
         {
-            event->Set();
+            event.Set();
         }
 
-        Event* event;
+        Event& event;
     };
 
     WaiterHelper* waiters = CRUNCH_STACK_ALLOC_T(WaiterHelper, count);
@@ -114,7 +119,7 @@ void MetaScheduler::WaitForAny(IWaitable** waitables, std::size_t count, WaitMod
 
     for (std::size_t i = 0; i < count; ++i)
     {
-        waiters[i].event = &event;
+        ::new (&waiters[i]) WaiterHelper(event);
         waitables[i]->AddWaiter(&waiters[i]);
     }
 
@@ -133,7 +138,7 @@ struct ContextRunState : Waiter
 {
     ISchedulerContext* context;
 
-    virtual void Wakeup()
+    virtual void Notify() CRUNCH_OVERRIDE
     {
         // Add to active set
         // Wake up scheduler if sleeping

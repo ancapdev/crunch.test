@@ -20,7 +20,7 @@ void Event::AddWaiter(Waiter* waiter)
         // Check for ready flag
         if (reinterpret_cast<std::size_t>(head) & STATE_BIT)
         {
-            waiter->Wakeup();
+            waiter->Notify();
             return;
         }
 
@@ -109,9 +109,9 @@ void Event::Set()
             Waiter* current = head;
             while (current != nullptr)
             {
-                // Cache next now bacause we can't access waiter after calling Wakeup()
+                // Cache next now bacause we can't access waiter after calling Notify()
                 Waiter* next = current->next;
-                current->Wakeup();
+                current->Notify();
                 current = next;
             }
 

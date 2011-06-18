@@ -11,7 +11,7 @@ struct TestWaiter : Waiter
 {
     TestWaiter() : wakeupCount(0) { }
 
-    virtual void Wakeup() CRUNCH_OVERRIDE
+    virtual void Notify() CRUNCH_OVERRIDE
     {
         wakeupCount++;
     }

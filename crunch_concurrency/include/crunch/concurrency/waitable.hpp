@@ -5,7 +5,7 @@ namespace Crunch { namespace Concurrency {
 
 struct Waiter
 {
-    virtual void Wakeup() = 0;
+    virtual void Notify() = 0;
 
     Waiter* next;
 };
