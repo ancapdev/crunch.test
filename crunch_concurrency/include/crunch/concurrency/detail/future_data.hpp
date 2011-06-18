@@ -16,11 +16,13 @@ public:
     void Set(T const& value)
     {
         ::new (ResultAddress()) T(value);
+        mSetEvent.Set();
     }
 
     void Set(T&& value)
     {
         ::new (ResultAddress()) T(std::move(value));
+        mSetEvent.Set();
     }
     
 
@@ -29,7 +31,7 @@ private:
 
     void* ResultAddress() { return reintpret_cast<void*>(&mResult); }
 
-    Event mCompletedEvent;
+    Event mSetEvent;
     StorageType mResult;
 };
 
