@@ -11,7 +11,7 @@ namespace Crunch { namespace Concurrency {
 class Event : public IWaitable
 {
 public:
-    Event(bool initialState);
+    Event(bool initialState = false);
 
     void Set();
     void Reset();

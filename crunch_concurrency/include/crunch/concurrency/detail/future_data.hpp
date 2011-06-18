@@ -29,7 +29,7 @@ public:
 private:
     typedef std::aligned_storage<sizeof(T), std::alignment_of<T>::value> StorageType;
 
-    void* ResultAddress() { return reintpret_cast<void*>(&mResult); }
+    void* ResultAddress() { return reinterpret_cast<void*>(&mResult); }
 
     Event mSetEvent;
     StorageType mResult;
