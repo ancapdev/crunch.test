@@ -1,7 +1,7 @@
 #ifndef CRUNCH_CONCURRENCY_DETAIL_FUTURE_DATA_HPP
 #define CRUNCH_CONCURRENCY_DETAIL_FUTURE_DATA_HPP
 
-#include "crunch/concurrency/atomic_waiter_list.hpp"
+#include "crunch/concurrency/event.hpp"
 
 #include <type_traits>
 #include <utility>
@@ -29,7 +29,7 @@ private:
 
     void* ResultAddress() { return reintpret_cast<void*>(&mResult); }
 
-    AtomicWaiterList mWaiters;
+    Event mCompletedEvent;
     StorageType mResult;
 };
 

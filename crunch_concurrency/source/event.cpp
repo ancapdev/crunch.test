@@ -1,46 +1,86 @@
 #include "crunch/concurrency/event.hpp"
+#include "crunch/concurrency/yield.hpp"
 
 namespace Crunch { namespace Concurrency {
 
 Event::Event(bool initialState)
-    : mState(initialState)
-    , mRootWaiter(NULL)
+    : mWaiters(initialState ? reinterpret_cast<Waiter*>(STATE_BIT) : nullptr, MEMORY_ORDER_RELAXED)
 { }
 
 void Event::AddWaiter(Waiter* waiter)
 {
-    if (mState)
+    CRUNCH_ASSERT((reinterpret_cast<std::size_t>(waiter) & FLAG_BITS) == 0);
+
+    ExponentialBackoff backoff;
+
+    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
+
+    for (;;)
     {
-        waiter->Wakeup();
-    }
-    else
-    {
-        Detail::SystemMutex::ScopedLock lock(mMutex);            
-        waiter->next = mRootWaiter;
-        mRootWaiter = waiter;
+        // Check for ready flag
+        if (reinterpret_cast<std::size_t>(head) & STATE_BIT)
+        {
+            waiter->Wakeup();
+            return;
+        }
+
+        // Check for lock flag
+        if (reinterpret_cast<std::size_t>(head) & LOCK_BIT)
+        {
+            backoff.Pause();
+            head = mWaiters.Load(MEMORY_ORDER_RELAXED);
+        }
+        else
+        {
+            // Attempt insertion
+            waiter->next = head;
+            if (mWaiters.CompareAndSwap(waiter, head))
+                return;
+
+            // New head is loaded as part of CAS
+            backoff.Pause();
+        }
     }
 }
 
 void Event::RemoveWaiter(Waiter* waiter)
 {
-    Detail::SystemMutex::ScopedLock lock(mMutex);
+    CRUNCH_ASSERT((reinterpret_cast<std::size_t>(waiter) & FLAG_BITS) == 0);
 
-    if (waiter == mRootWaiter)
+    ExponentialBackoff backoff;
+
+    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
+
+    for (;;)
     {
-        mRootWaiter = mRootWaiter->next;
-    }
-    else
-    {
-        Waiter* currentWaiter = mRootWaiter;
-        while (currentWaiter)
+        if ((reinterpret_cast<std::size_t>(head) & LOCK_BIT) == 0 &&
+            mWaiters.CompareAndSwap(reinterpret_cast<Waiter*>(LOCK_BIT), head))
         {
-            if (currentWaiter->next == waiter)
+            Waiter* current = head;
+            if (current == waiter)
             {
-                currentWaiter->next = currentWaiter->next->next;
-                break;
+                head = current->next;
             }
-            currentWaiter = currentWaiter->next;
+            else
+            {
+                while (current->next != nullptr)
+                {
+                    if (current->next == waiter)
+                    {
+                        current->next = waiter->next;
+                        break;
+                    }
+                 
+                    current = current->next;
+                }
+            }
+
+            mWaiters.Store(head, MEMORY_ORDER_RELEASE);
+
+            return;
         }
+
+        backoff.Pause();
     }
 }
 
@@ -51,31 +91,67 @@ bool Event::IsOrderDependent() const
 
 void Event::Set()
 {
-    if (mState)
-        return;
+    ExponentialBackoff backoff;
 
-    Detail::SystemMutex::ScopedLock lock(mMutex);
-    mState = true;
-    Waiter* waiter = mRootWaiter;
-    mRootWaiter = NULL;
+    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
 
-    while (waiter)
+    for (;;)
     {
-        Waiter* next = waiter->next;
-        waiter->next = NULL;
-        waiter->Wakeup();
-        waiter = next;
+        // If we are already set, return
+        if ((reinterpret_cast<std::size_t>(head) & STATE_BIT) != 0)
+            return;
+
+        // Acquire lock and notify waiters
+        // Set state bit on acquire so AddWaiter doesn't block on the lock
+        if ((reinterpret_cast<std::size_t>(head) & LOCK_BIT) == 0 &&
+            mWaiters.CompareAndSwap(reinterpret_cast<Waiter*>(LOCK_BIT | STATE_BIT), head))
+        {
+            Waiter* current = head;
+            while (current != nullptr)
+            {
+                // Cache next now bacause we can't access waiter after calling Wakeup()
+                Waiter* next = current->next;
+                current->Wakeup();
+                current = next;
+            }
+
+            // Release the lock, clear the list, and set state bit
+            mWaiters.Store(reinterpret_cast<Waiter*>(STATE_BIT));
+
+            return;
+        }
+
+        backoff.Pause();
     }
 }
 
-void Event::Clear()
+void Event::Reset()
 {
-    if (!mState)
-        return;
+    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
+    
+    ExponentialBackoff backoff;
 
-    // Take lock so we don't flip state while signaling waiters
-    Detail::SystemMutex::ScopedLock lock(mMutex);
-    mState = false;
+    for (;;)
+    {
+        // If already reset, nothing to do
+        if ((reinterpret_cast<std::size_t>(head) & STATE_BIT) == 0)
+            return;
+
+        // If the event is in a signalled stated it must either be in the process of signalling or empty
+        CRUNCH_ASSERT((reinterpret_cast<std::size_t>(head) & ~LOCK_BIT) == STATE_BIT);
+
+        // If lock is taken need to wait for it to complete
+            if ((reinterpret_cast<std::size_t>(head) & LOCK_BIT) == 0 &&
+            mWaiters.CompareAndSwap(nullptr, head))
+            return;
+
+        backoff.Pause();
+    }
+}
+
+bool Event::IsSet() const
+{
+    return (reinterpret_cast<std::size_t>(mWaiters.Load(MEMORY_ORDER_RELAXED)) & STATE_BIT) != 0;
 }
 
 }}

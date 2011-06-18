@@ -1,6 +1,6 @@
 #include "crunch/base/override.hpp"
+#include "crunch/concurrency/atomic.hpp"
 #include "crunch/concurrency/waitable.hpp"
-#include "crunch/concurrency/detail/system_mutex.hpp"
 
 namespace Crunch { namespace Concurrency {
 
@@ -10,17 +10,23 @@ public:
     Event(bool initialState);
 
     void Set();
-    void Clear();
-    bool IsSet() const { return mState; }
+    void Reset();
+    bool IsSet() const;
 
     virtual void AddWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
     virtual void RemoveWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
     virtual bool IsOrderDependent() const CRUNCH_OVERRIDE;
 
 private:
-    volatile bool mState;
-    Detail::SystemMutex mMutex;
-    Waiter* mRootWaiter;
+    static const std::size_t LOCK_BIT = 1;
+    static const std::size_t STATE_BIT = 2;
+    static const std::size_t FLAG_BITS = 3;
+
+    // Reserves lower 2 bits of pointer. I.e., pointer must be 4 byte aligned
+    // Bit 0 = lock bit
+    // Bit 1 = state bit
+    // Doesn't need to ABA protection because removal is always by lock
+    Atomic<Waiter*> mWaiters;
 };
 
 }}

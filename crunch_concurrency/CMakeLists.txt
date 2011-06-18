@@ -8,7 +8,6 @@ endif()
     
 add_library(crunch_concurrency_lib
   include/crunch/concurrency/atomic.hpp
-  include/crunch/concurrency/atomic_waiter_list.hpp
   include/crunch/concurrency/lock_free_slist.hpp
   include/crunch/concurrency/event.hpp
   include/crunch/concurrency/fence.hpp
@@ -24,7 +23,6 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/detail/future_data.hpp
   include/crunch/concurrency/detail/system_event.hpp
   include/crunch/concurrency/detail/system_mutex.hpp
-  source/atomic_waiter_list.cpp
   source/event.cpp
   source/meta_scheduler.cpp
   source/platform/${PLATFORM_NAME}/system_event.cpp

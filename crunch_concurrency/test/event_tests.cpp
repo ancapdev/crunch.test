@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(StateChangeTest)
     Event e(true);
     BOOST_CHECK(e.IsSet());
 
-    e.Clear();
+    e.Reset();
     BOOST_CHECK(!e.IsSet());
 
     e.Set();
