@@ -68,8 +68,13 @@ endmacro()
 #
 # libraries and executables
 #
-include_directories("${CMAKE_SOURCE_DIR}/crunch_base/include")
-include_directories("${CMAKE_SOURCE_DIR}/crunch_concurrency/include")
-add_subdirectory(crunch_base)
-add_subdirectory(crunch_concurrency)
+set(PROJECTS
+  crunch_base
+  crunch_concurrency
+  crunch_concurrency_tasks)
+
+foreach(_p ${PROJECTS})
+  include_directories("${CMAKE_SOURCE_DIR}/${_p}/include")
+  add_subdirectory(${_p})
+endforeach()
 
