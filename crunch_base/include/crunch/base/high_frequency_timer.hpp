@@ -16,22 +16,20 @@ namespace Crunch {
 class HighFrequencyTimer
 {
 public:
-#if defined (CRUNCH_PLATFORM_WINDOWS)
+#if defined (CRUNCH_PLATFORM_WIN32)
     typedef LARGE_INTEGER SampleType;
-
     HighFrequencyTimer();
-
-private:
-    double mInvFrequency mInvFrequency;
-
-public:
 #else
     typedef timespec SampleType;
 #endif
 
     SampleType Sample() const;
-
     double GetElapsedSeconds(SampleType begin, SampleType end) const;
+
+private:
+#if defined (CRUNCH_PLATFORM_WIN32)
+    double mInvFrequency;
+#endif
 };
 
 }
