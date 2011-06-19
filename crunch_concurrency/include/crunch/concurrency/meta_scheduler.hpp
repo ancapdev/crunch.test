@@ -5,6 +5,7 @@
 #include "crunch/concurrency/scheduler.hpp"
 #include "crunch/concurrency/thread_local.hpp"
 #include "crunch/concurrency/waitable.hpp"
+#include "crunch/concurrency/detail/system_event.hpp"
 #include "crunch/concurrency/detail/system_mutex.hpp"
 
 #include <memory>
@@ -81,6 +82,10 @@ private:
     Detail::SystemMutex mContextsLock;
 
     static CRUNCH_THREAD_LOCAL Context* tCurrentContext;
+
+    // For use in threads that haven't joined the scheduler
+    static Detail::SystemMutex sSharedEventLock;
+    static Detail::SystemEvent sSharedEvent;
 };
 
 }}

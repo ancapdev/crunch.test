@@ -7,7 +7,7 @@ namespace Crunch { namespace Concurrency {
 
 BOOST_AUTO_TEST_SUITE(MetaSchedulerTests)
 
-BOOST_AUTO_TEST_CASE(WaitForAllTest)
+BOOST_AUTO_TEST_CASE(WaitTest)
 {
     struct NullWaitable : IWaitable
     {
@@ -19,11 +19,9 @@ BOOST_AUTO_TEST_CASE(WaitForAllTest)
     NullWaitable nullWaitable;
     IWaitable* waitables[] = { &nullWaitable };
 
-    MetaScheduler::SchedulerList schedulers;
-    MetaScheduler metaScheduler(schedulers);
-    metaScheduler.Join(MetaScheduler::ThreadConfig());
     MetaScheduler::WaitForAll(waitables, MetaScheduler::WAIT_MODE_YIELD_PREEMTIVE);
-    metaScheduler.Leave();
+
+    MetaScheduler::WaitForAny(waitables, MetaScheduler::WAIT_MODE_YIELD_PREEMTIVE);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

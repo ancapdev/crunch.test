@@ -1,6 +1,10 @@
 #ifndef CRUNCH_CONCURRENCY_WAITABLE_HPP
 #define CRUNCH_CONCURRENCY_WAITABLE_HPP
 
+#include "crunch/base/override.hpp"
+
+#include <utility>
+
 namespace Crunch { namespace Concurrency {
 
 struct Waiter
@@ -9,6 +13,32 @@ struct Waiter
 
     Waiter* next;
 };
+
+template<typename F>
+struct GenericWaiter : Waiter
+{
+    GenericWaiter(F const& f) : f(f) {}
+    GenericWaiter(F&& f) : f(std::move(f)) {}
+
+    virtual void Notify() CRUNCH_OVERRIDE
+    {
+        f();
+    }
+
+    F f;
+};
+
+template<typename F>
+GenericWaiter<F> MakeWaiter(F const& f)
+{
+    return GenericWaiter<F>(f);
+}
+
+template<typename F>
+GenericWaiter<F> MakeWaiter(F&& f)
+{
+    return GenericWaiter<F>(std::move(f));
+}
 
 struct IWaitable
 {
