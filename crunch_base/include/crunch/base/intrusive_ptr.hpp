@@ -1,6 +1,8 @@
 #ifndef CRUNCH_BASE_INTRUSIVE_PTR_HPP
 #define CRUNCH_BASE_INTRUSIVE_PTR_HPP
 
+#include "crunch/base/platform.hpp"
+
 namespace Crunch {
 
 //
@@ -93,10 +95,18 @@ public:
         return mObject;
     }
 
+#if defined (CRUNCH_COMPILER_MSVC)
+    // TODO: replace with safe bool convertible type
+    operator bool() const
+    {
+        return mObject != nullptr;
+    }
+#else
     explicit operator bool () const
     {
         return mObject != nullptr;
     }
+#endif
 
 private:
     void CheckedRelease()
