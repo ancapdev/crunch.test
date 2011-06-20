@@ -16,7 +16,7 @@ public:
         : mObject(nullptr)
     {}
 
-    IntrusivePtr(T* object, bool addReference = true)
+    explicit IntrusivePtr(T* object, bool addReference = true)
         : mObject(object)
     {
         if (addReference)
@@ -46,6 +46,17 @@ public:
         return *this;
     }
 
+    IntrusivePtr& operator = (IntrusivePtr&& rhs)
+    {
+        if (&rhs == this)
+            return *this;
+
+        CheckedRelease();
+        mObject = rhs.mObject;
+        rhs.mObject = nullptr;
+        return *this;
+    }
+
     IntrusivePtr& operator = (T* object)
     {
         Reset(object);
@@ -61,7 +72,7 @@ public:
     void Reset(T* object, bool addReference = true)
     {
         if (addReference)
-            AddReference(object);
+            AddRef(object);
 
         CheckedRelease();
         mObject = object;
@@ -72,7 +83,7 @@ public:
         return mObject;
     }
 
-    T& operator & () const
+    T& operator * () const
     {
         return *mObject;
     }
@@ -84,7 +95,7 @@ public:
 
     bool operator ! () const
     {
-        return mObject != nullptr;
+        return !mObject;
     }
 
 private:
@@ -96,6 +107,115 @@ private:
 
     T* mObject;
 };
+
+template<typename T>
+bool operator == (IntrusivePtr<T> const& lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs.Get() == rhs.Get();
+}
+
+template<typename T>
+bool operator == (IntrusivePtr<T> const& lhs, T* rhs)
+{
+    return lhs.Get() == rhs;
+}
+
+template<typename T>
+bool operator == (T* lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs == rhs.Get();
+}
+
+template<typename T>
+bool operator != (IntrusivePtr<T> const& lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs.Get() != rhs.Get();
+}
+
+template<typename T>
+bool operator != (IntrusivePtr<T> const& lhs, T* rhs)
+{
+    return lhs.Get() != rhs;
+}
+
+template<typename T>
+bool operator != (T* lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs != rhs.Get();
+}
+
+template<typename T>
+bool operator < (IntrusivePtr<T> const& lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs.Get() < rhs.Get();
+}
+
+template<typename T>
+bool operator < (IntrusivePtr<T> const& lhs, T* rhs)
+{
+    return lhs.Get() < rhs;
+}
+
+template<typename T>
+bool operator < (T* lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs < rhs.Get();
+}
+
+template<typename T>
+bool operator <= (IntrusivePtr<T> const& lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs.Get() <= rhs.Get();
+}
+
+template<typename T>
+bool operator <= (IntrusivePtr<T> const& lhs, T* rhs)
+{
+    return lhs.Get() <= rhs;
+}
+
+template<typename T>
+bool operator <= (T* lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs <= rhs.Get();
+}
+
+template<typename T>
+bool operator > (IntrusivePtr<T> const& lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs.Get() > rhs.Get();
+}
+
+template<typename T>
+bool operator > (IntrusivePtr<T> const& lhs, T* rhs)
+{
+    return lhs.Get() > rhs;
+}
+
+template<typename T>
+bool operator > (T* lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs > rhs.Get();
+}
+
+template<typename T>
+bool operator >= (IntrusivePtr<T> const& lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs.Get() >= rhs.Get();
+}
+
+template<typename T>
+bool operator >= (IntrusivePtr<T> const& lhs, T* rhs)
+{
+    return lhs.Get() >= rhs;
+}
+
+template<typename T>
+bool operator >= (T* lhs, IntrusivePtr<T> const& rhs)
+{
+    return lhs >= rhs.Get();
+}
+
 
 }
 

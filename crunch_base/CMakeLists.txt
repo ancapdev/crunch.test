@@ -15,6 +15,7 @@ add_library(crunch_base_lib
 
 
 add_executable(crunch_base_test
+  test/intrusive_ptr_tests.cpp
   test/main.cpp
   test/memory_tests.cpp)
 
