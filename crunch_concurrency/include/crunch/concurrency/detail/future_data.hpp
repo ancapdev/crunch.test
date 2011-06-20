@@ -2,6 +2,7 @@
 #define CRUNCH_CONCURRENCY_DETAIL_FUTURE_DATA_HPP
 
 #include "crunch/base/override.hpp"
+#include "crunch/base/platform.hpp"
 #include "crunch/base/stdint.hpp"
 #include "crunch/concurrency/atomic.hpp"
 #include "crunch/concurrency/event.hpp"
@@ -39,7 +40,7 @@ public:
 
     bool HasException() const
     {
-        return IsReady() && mException != nullptr;
+        return IsReady() && !(mException == nullptr);
     }
 
     void Wait()
@@ -96,13 +97,22 @@ public:
     T& Get()
     {
         Wait();
-        if (mException != nullptr)
-            std::rethrow_exception(mException);
-        else
+
+        if (mException == nullptr)
             return GetValue();
+
+#if defined (CRUNCH_PLATFORM_WIN32)
+        RethrowException();
+#else
+        std::rethrow_exception(mException);
+#endif
     }
 
 private:
+#if defined (CRUNCH_PLATFORM_WIN32)
+    __declspec(noreturn) void RethrowException() { std::rethrow_exception(mException); }
+#endif
+    
     T& GetValue()
     {
         return *static_cast<T*>(ResultAddress());
