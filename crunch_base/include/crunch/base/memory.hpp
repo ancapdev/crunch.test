@@ -10,14 +10,14 @@ namespace Crunch {
 
 #if defined (CRUNCH_PLATFORM_WIN32)
 
-inline void* MallocAligned(std::size_t bytes, std::size_t alignment)
+__declspec(noalias) __declspec(restrict) inline void* MallocAligned(std::size_t bytes, std::size_t alignment)
 {
-    return ::_malloc_aligned(bytes, alignment);
+    return ::_aligned_malloc(bytes, alignment);
 }
 
-inline void FreeAligned(void* allocation)
+__declspec(noalias) inline void FreeAligned(void* allocation)
 {
-    ::_free_aligned(allocation);
+    ::_aligned_free(allocation);
 }
 
 #elif defined (CRUNCH_PLATFORM_LINUX)
