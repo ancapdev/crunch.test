@@ -34,12 +34,12 @@ public:
 
     bool HasValue() const
     {
-        return IsReady() && mException == std::exception_ptr();
+        return IsReady() && mException == nullptr;
     }
 
     bool HasException() const
     {
-        return IsReady() && mException != std::exception_ptr();
+        return IsReady() && mException != nullptr;
     }
 
     void Wait()
@@ -96,7 +96,7 @@ public:
     T& Get()
     {
         Wait();
-        if (mException != std::exception_ptr())
+        if (mException != nullptr)
             std::rethrow_exception(mException);
         else
             return GetValue();
