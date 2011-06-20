@@ -41,12 +41,12 @@ inline void FreeAligned(void* allocation)
 inline void* AlignPointerUp(void* pointer, std::size_t alignment)
 {
     std::size_t const a = alignment - 1;
-    return (void*)(((std::size_t)pointer + a) & a);
+    return (void*)(((std::size_t)pointer + a) & ~a);
 }
 
 inline void* AlignPointerDown(void* pointer, std::size_t alignment)
 {
-    return (void*)((std::size_t)pointer & (alignment - 1));
+    return (void*)((std::size_t)pointer & ~(alignment - 1));
 }
 
 inline bool IsPointerAligned(void* pointer, std::size_t alignment)
