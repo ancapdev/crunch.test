@@ -40,9 +40,9 @@ public:
         CheckedRelease();
     }
 
-    InstrusivePtr& operator = (InstrusivePtr const& rhs)
+    IntrusivePtr& operator = (IntrusivePtr const& rhs)
     {
-        Reset(rhs.mObject):
+        Reset(rhs.mObject);
         return *this;
     }
 
