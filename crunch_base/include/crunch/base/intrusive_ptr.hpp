@@ -93,9 +93,9 @@ public:
         return mObject;
     }
 
-    bool operator ! () const
+    explicit operator bool () const
     {
-        return !mObject;
+        return mObject != nullptr;
     }
 
 private:

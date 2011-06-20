@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(AccessorsTest)
     TestPtr p(&a);
     BOOST_CHECK_EQUAL(p.Get(), &a);
     BOOST_CHECK_EQUAL(&*p, &a);
-    BOOST_CHECK(!!p);
+    BOOST_CHECK((bool)p);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
