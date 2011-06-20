@@ -77,8 +77,24 @@ void MetaScheduler::Run(IWaitable& until)
 {
 }
 
+void WaitFor(IWaitable& waitable, WaitMode waitMode)
+{
+    MetaScheduler::Context* context = MetaScheduler::tCurrentContext;
 
-void MetaScheduler::WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
+    if (context)
+        context->WaitFor(waitable);
+    else
+    {
+        auto waiter = MakeWaiter([&] { MetaScheduler::sSharedEvent.Set(); });
+        Detail::SystemMutex::ScopedLock lock(MetaScheduler::sSharedEventLock);
+     
+        MetaScheduler::sSharedEvent.Reset();
+        waitable.AddWaiter(&waiter);
+        MetaScheduler::sSharedEvent.Wait();
+    }
+}
+
+void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
 {
     IWaitable** unordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
     IWaitable** ordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
@@ -96,7 +112,7 @@ void MetaScheduler::WaitForAll(IWaitable** waitables, std::size_t count, WaitMod
     if (orderedCount != 0)
         std::sort(ordered, ordered + orderedCount);
 
-    Context* context = tCurrentContext;
+    MetaScheduler::Context* context = MetaScheduler::tCurrentContext;
 
     if (context)
     {
@@ -110,14 +126,14 @@ void MetaScheduler::WaitForAll(IWaitable** waitables, std::size_t count, WaitMod
     }
     else
     {
-        auto waiter = MakeWaiter([&] { sSharedEvent.Set(); });
+        auto waiter = MakeWaiter([&] { MetaScheduler::sSharedEvent.Set(); });
         auto waitHelper = [&] (IWaitable& waitable) {
-            sSharedEvent.Reset();
+            MetaScheduler::sSharedEvent.Reset();
             waitable.AddWaiter(&waiter);
-            sSharedEvent.Wait();
+            MetaScheduler::sSharedEvent.Wait();
         };
             
-        Detail::SystemMutex::ScopedLock lock(sSharedEventLock);
+        Detail::SystemMutex::ScopedLock lock(MetaScheduler::sSharedEventLock);
 
         for (std::size_t i = 0; i < orderedCount; ++i)
             waitHelper(*ordered[i]);
@@ -127,7 +143,7 @@ void MetaScheduler::WaitForAll(IWaitable** waitables, std::size_t count, WaitMod
     }
 }
 
-void MetaScheduler::WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
+void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
 {
     struct WaiterHelper : Waiter
     {
@@ -153,19 +169,19 @@ void MetaScheduler::WaitForAny(IWaitable** waitables, std::size_t count, WaitMod
         waitables[i]->AddWaiter(&waiters[i]);
     }
 
-    Context* context = tCurrentContext;
+    MetaScheduler::Context* context = MetaScheduler::tCurrentContext;
     if (context)
     {
         context->WaitFor(event);
     }
     else
     {
-        auto waiter = MakeWaiter([&] { sSharedEvent.Set(); });
+        auto waiter = MakeWaiter([&] { MetaScheduler::sSharedEvent.Set(); });
 
-        Detail::SystemMutex::ScopedLock lock(sSharedEventLock);
-        sSharedEvent.Reset();
+        Detail::SystemMutex::ScopedLock lock(MetaScheduler::sSharedEventLock);
+        MetaScheduler::sSharedEvent.Reset();
         event.AddWaiter(&waiter);
-        sSharedEvent.Wait();
+        MetaScheduler::sSharedEvent.Wait();
     }
 
     for (std::size_t i = 0; i < count; ++i)

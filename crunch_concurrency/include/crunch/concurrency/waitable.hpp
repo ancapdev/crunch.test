@@ -52,6 +52,18 @@ struct IWaitable
     virtual ~IWaitable() { }
 };
 
+
+enum WaitMode
+{
+    WAIT_MODE_POLL,
+    WAIT_MODE_YIELD_PREEMTIVE,
+    WAIT_MODE_YIELD_COOPERATIVE
+};
+
+void WaitFor(IWaitable& waitable, WaitMode waitMode = WAIT_MODE_YIELD_COOPERATIVE);
+void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode = WAIT_MODE_YIELD_COOPERATIVE);
+void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WAIT_MODE_YIELD_COOPERATIVE);
+
 }}
 
 #endif

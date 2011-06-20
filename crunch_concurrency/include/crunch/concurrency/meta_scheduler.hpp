@@ -44,17 +44,6 @@ public:
 
     void Run(IWaitable& until);
 
-    enum WaitMode
-    {
-        WAIT_MODE_POLL,
-        WAIT_MODE_YIELD_PREEMTIVE,
-        WAIT_MODE_YIELD_COOPERATIVE
-    };
-
-    static void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode = WAIT_MODE_YIELD_COOPERATIVE);
-    static void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WAIT_MODE_YIELD_COOPERATIVE);
-
-
     /*
     // Run the scheduler on this thread.
     // TODO: mask for which types of schedulers to run? or simply have multiple meta schedulers for that purpose?
@@ -70,6 +59,10 @@ public:
     */
 
 private:
+    friend void WaitFor(IWaitable&, WaitMode);
+    friend void WaitForAll(IWaitable**, std::size_t, WaitMode);
+    friend void WaitForAny(IWaitable**, std::size_t, WaitMode);
+
     class Context;
     typedef std::unique_ptr<Context> ContextPtr;
 
