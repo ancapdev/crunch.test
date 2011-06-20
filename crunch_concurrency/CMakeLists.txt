@@ -24,6 +24,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/detail/system_event.hpp
   include/crunch/concurrency/detail/system_mutex.hpp
   source/event.cpp
+  source/future_data.cpp
   source/meta_scheduler.cpp
   source/platform/${PLATFORM_NAME}/system_event.cpp
   source/platform/${PLATFORM_NAME}/system_mutex.cpp
@@ -41,6 +42,7 @@ endif()
 add_executable(crunch_concurrency_test
   test/atomic_tests.cpp
   test/event_tests.cpp
+  test/future_tests.cpp
   test/main.cpp
   test/meta_scheduler_tests.cpp)
 

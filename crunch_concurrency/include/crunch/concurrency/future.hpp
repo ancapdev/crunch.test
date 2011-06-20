@@ -2,27 +2,76 @@
 #define CRUNCH_CONCURRENCY_FUTURE_HPP
 
 #include "crunch/base/override.hpp"
+#include "crunch/base/intrusive_ptr.hpp"
 #include "crunch/concurrency/waitable.hpp"
 #include "crunch/concurrency/detail/future_data.hpp"
 
-#include <memory>
+#include <utility>
 
 namespace Crunch { namespace Concurrency {
 
+// Similar to std::shared_future
 template<typename T>
 class Future : public IWaitable
 {
 public:
+    typedef Detail::FutureData<T> DataType;
+    typedef IntrusivePtr<DataType> DataPtr;
+
+
+    // For internal use
+    Future(DataPtr const& data)
+        : mData(data)
+    {}
+
+    Future(DataPtr&& data)
+        : mData(std::move(data))
+    {}
+
+    bool IsReady() const
+    {
+        return mData->IsReady();
+    }
+
+    bool HasValue() const
+    {
+        return mData->HasValue();
+    }
+
+    bool HasException() const
+    {
+        return mData->HasException();
+    }
+
+    T const& Get() const
+    {
+        return mData->Get();
+    }
+
+    void Wait() const
+    {
+        mData->Wait();
+    }
+
     //
     // IWaitable
     //
-    virtual void AddWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
-    virtual void RemoveWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
-    virtual bool IsOrderDependent() const CRUNCH_OVERRIDE;
+    virtual void AddWaiter(Waiter* waiter) CRUNCH_OVERRIDE
+    {
+        mData->AddWaiter(waiter);
+    }
+
+    virtual void RemoveWaiter(Waiter* waiter) CRUNCH_OVERRIDE
+    {
+        mData->RemoveWaiter(waiter);
+    }
+
+    virtual bool IsOrderDependent() const CRUNCH_OVERRIDE
+    {
+        return false;
+    }
 
 private:
-    typedef Detail::FutureData<T> DataType;
-    typedef std::shared_ptr<DataType> DataPtr;
 
     DataPtr mData;
 };
@@ -30,16 +79,11 @@ private:
 template<>
 class Future<void> : public IWaitable
 {
-public:
-    //
-    // IWaitable
-    //
-    virtual void AddWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
-    virtual void RemoveWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
-    virtual bool IsOrderDependent() const CRUNCH_OVERRIDE;
+};
 
-private:
-
+template<typename T>
+class Future<T&>
+{
 };
 
 }}
