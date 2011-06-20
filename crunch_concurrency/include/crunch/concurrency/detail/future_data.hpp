@@ -7,10 +7,11 @@
 #include "crunch/concurrency/atomic.hpp"
 #include "crunch/concurrency/event.hpp"
 
-#include <type_traits>
-#include <utility>
 #include <cstddef>
 #include <exception>
+#include <memory>
+#include <type_traits>
+#include <utility>
 
 namespace Crunch { namespace Concurrency { namespace Detail {
 
@@ -24,7 +25,7 @@ public:
     void SetException(std::exception_ptr const& exception)
     {
         CRUNCH_ASSERT(!Event::IsSet());
-        mException = exception;
+        mException.reset(new std::exception_ptr(exception));
         Event::Set();
     }
 
@@ -35,12 +36,12 @@ public:
 
     bool HasValue() const
     {
-        return IsReady() && mException == nullptr;
+        return IsReady() && !mException;
     }
 
     bool HasException() const
     {
-        return IsReady() && !(mException == nullptr);
+        return IsReady() && mException;
     }
 
     void Wait()
@@ -56,7 +57,7 @@ protected:
     virtual void Destroy();
 
     Atomic<uint32> mRefCount;
-    std::exception_ptr mException;
+    std::unique_ptr<std::exception_ptr> mException;
 };
 
 inline void AddRef(FutureDataBase* object)
@@ -98,19 +99,19 @@ public:
     {
         Wait();
 
-        if (mException == nullptr)
+        if (!mException)
             return GetValue();
 
 #if defined (CRUNCH_PLATFORM_WIN32)
         RethrowException();
 #else
-        std::rethrow_exception(mException);
+        std::rethrow_exception(*mException);
 #endif
     }
 
 private:
 #if defined (CRUNCH_PLATFORM_WIN32)
-    __declspec(noreturn) void RethrowException() { std::rethrow_exception(mException); }
+    __declspec(noreturn) void RethrowException() { std::rethrow_exception(*mException); }
 #endif
     
     T& GetValue()
