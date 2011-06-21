@@ -7,7 +7,7 @@ if(MSVC)
   add_definitions("-D_WIN32_WINNT=0x0501")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 else()
-  add_definitions("-Dnullptr=0")
+  add_definitions("-Dnullptr=__null")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
   if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
     # Enable cmpxchg16
