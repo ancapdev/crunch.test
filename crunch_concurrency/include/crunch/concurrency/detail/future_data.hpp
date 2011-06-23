@@ -22,6 +22,8 @@ public:
     using Event::AddWaiter;
     using Event::RemoveWaiter;
 
+    FutureDataBase() : mRefCount(0, MEMORY_ORDER_RELEASE) {}
+
     void SetException(std::exception_ptr const& exception)
     {
         CRUNCH_ASSERT(!Event::IsSet());
