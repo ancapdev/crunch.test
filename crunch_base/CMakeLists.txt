@@ -1,3 +1,8 @@
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
+  set(_platformFiles
+    include/crunch/base/arch/x86/cpuid.hpp)
+endif()
+
 add_library(crunch_base_lib
   include/crunch/base/align.hpp
   include/crunch/base/assert.hpp
@@ -11,8 +16,8 @@ add_library(crunch_base_lib
   include/crunch/base/stdint.hpp
   source/assert.cpp
   source/platform/${PLATFORM_NAME}/assert.cpp
-  source/platform/${PLATFORM_NAME}/high_frequency_timer.cpp)
-
+  source/platform/${PLATFORM_NAME}/high_frequency_timer.cpp
+  ${_platformFiles})
 
 add_executable(crunch_base_test
   test/intrusive_ptr_tests.cpp
