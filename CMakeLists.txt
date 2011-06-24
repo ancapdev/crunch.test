@@ -5,7 +5,21 @@ cmake_minimum_required(VERSION 2.8)
 #
 if(MSVC)
   add_definitions("-D_WIN32_WINNT=0x0501")
+
+  # Enable parallel compilation
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+
+  # Set warning level to highest
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+
+  # Disable some warnings
+  # warning C4480: nonstandard extension used: specifying underlying type for enum 'Crunch::CpuidFunction'
+  # warning C4481: nonstandard extension used: override specifier 'override'
+  # warning C4482: nonstandard extension used: enum 'Crunch::CpuidFunction' used in qualified name
+  # warning C4127: conditional expression is constant 
+  # (boost utf) warning C4535: calling _set_se_translator() requires /EHa
+  # (boost utf) warning C4702: unreachable code
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4480 /wd4481 /wd4482 /wd4127 /wd4535 /wd4702")
 else()
   add_definitions("-Dnullptr=__null")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")

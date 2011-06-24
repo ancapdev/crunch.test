@@ -1,10 +1,12 @@
 #ifndef CRUNCH_CONCURRENCY_LOCK_GUARD_HPP
 #define CRUNCH_CONCURRENCY_LOCK_GUARD_HPP
 
+#include "crunch/base/noncopyable.hpp"
+
 namespace Crunch { namespace Concurrency {
 
 template<typename LockableType>
-class LockGuard
+class LockGuard : NonCopyable
 {
 public:
     LockGuard(LockableType& lockable)

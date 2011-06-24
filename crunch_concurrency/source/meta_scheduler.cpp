@@ -1,6 +1,7 @@
 #include "crunch/concurrency/meta_scheduler.hpp"
 
 #include "crunch/base/assert.hpp"
+#include "crunch/base/noncopyable.hpp"
 #include "crunch/base/override.hpp"
 #include "crunch/base/stack_alloc.hpp"
 #include "crunch/concurrency/event.hpp"
@@ -9,7 +10,7 @@
 
 namespace Crunch { namespace Concurrency {
 
-class MetaScheduler::Context
+class MetaScheduler::Context : NonCopyable
 {
 public:
     Context(MetaScheduler& owner)
@@ -56,7 +57,7 @@ MetaScheduler::MetaScheduler(const SchedulerList& schedulers)
 MetaScheduler::~MetaScheduler()
 {}
 
-void MetaScheduler::Join(ThreadConfig const& config)
+void MetaScheduler::Join(ThreadConfig const&)
 {
     CRUNCH_ASSERT_ALWAYS(tCurrentContext == nullptr);
 
@@ -73,11 +74,11 @@ void MetaScheduler::Leave()
     tCurrentContext = NULL;
 }
 
-void MetaScheduler::Run(IWaitable& until)
+void MetaScheduler::Run(IWaitable&)
 {
 }
 
-void WaitFor(IWaitable& waitable, WaitMode waitMode)
+void WaitFor(IWaitable& waitable, WaitMode)
 {
     MetaScheduler::Context* context = MetaScheduler::tCurrentContext;
 
@@ -94,7 +95,7 @@ void WaitFor(IWaitable& waitable, WaitMode waitMode)
     }
 }
 
-void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
+void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode)
 {
     IWaitable** unordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
     IWaitable** ordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
@@ -143,9 +144,9 @@ void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
     }
 }
 
-void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
+void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode)
 {
-    struct WaiterHelper : Waiter
+    struct WaiterHelper : Waiter, NonCopyable
     {
         WaiterHelper(Event& event)
             : event(event)

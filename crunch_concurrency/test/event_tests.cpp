@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(AddWaiterToSetTest)
 
     // Add waiter to set event. Should be called immediately.
     e.AddWaiter(&waiter);
-    BOOST_CHECK_EQUAL(waiter.wakeupCount, 1);
+    BOOST_CHECK_EQUAL(waiter.wakeupCount, 1u);
 }
 
 BOOST_AUTO_TEST_CASE(AddWaiterToUnsetTest)
@@ -64,17 +64,17 @@ BOOST_AUTO_TEST_CASE(AddWaiterToUnsetTest)
 
     // Add waiter to unset event.
     e.AddWaiter(&waiter);
-    BOOST_CHECK_EQUAL(waiter.wakeupCount, 0);
+    BOOST_CHECK_EQUAL(waiter.wakeupCount, 0u);
 
     // Remove waiter and set event.
     e.RemoveWaiter(&waiter);
     e.Set();
-    BOOST_CHECK_EQUAL(waiter.wakeupCount, 0);
+    BOOST_CHECK_EQUAL(waiter.wakeupCount, 0u);
 
     // Add waiter and set event.
     e.AddWaiter(&waiter);
     e.Set();
-    BOOST_CHECK_EQUAL(waiter.wakeupCount, 1);
+    BOOST_CHECK_EQUAL(waiter.wakeupCount, 1u);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

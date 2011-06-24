@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_CASE(WaitTest)
     struct NullWaitable : IWaitable
     {
         virtual void AddWaiter(Waiter* waiter) { waiter->Notify(); }
-        virtual void RemoveWaiter(Waiter* waiter) {}
+        virtual void RemoveWaiter(Waiter*) {}
         virtual bool IsOrderDependent() const { return false; }
     };
 

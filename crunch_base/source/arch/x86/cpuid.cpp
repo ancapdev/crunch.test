@@ -9,13 +9,16 @@ namespace Crunch {
 CpuidResult QueryCpuid(uint32 function, uint32 extendedFunction)
 {
 #if defined (CRUNCH_COMPILER_MSVC)
-    int result[4];
-    __cpuidex(result, static_cast<int>(function), static_cast<int>(extendedFunction));
-    return CpuidResult{
-        static_cast<uint32>(result[0]),
-        static_cast<uint32>(result[1]),
-        static_cast<uint32>(result[2]),
-        static_cast<uint32>(result[3])};
+    int temp[4];
+    __cpuidex(temp, static_cast<int>(function), static_cast<int>(extendedFunction));
+    CpuidResult const result =
+    {
+        static_cast<uint32>(temp[0]),
+        static_cast<uint32>(temp[1]),
+        static_cast<uint32>(temp[2]),
+        static_cast<uint32>(temp[3])
+    };
+    return result;
 #elif defined (CRUNCH_COMPILER_GCC)
     CpuidResult result;
     asm volatile(

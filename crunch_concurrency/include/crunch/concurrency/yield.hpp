@@ -70,7 +70,7 @@ public:
 
 private:
     int mCount;
-    int const mLimit;
+    int mLimit;
 };
 
 }}

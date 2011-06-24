@@ -19,6 +19,8 @@ struct GenericWaiter : Waiter
 {
     GenericWaiter(F const& f) : f(f) {}
     GenericWaiter(F&& f) : f(std::move(f)) {}
+    GenericWaiter(GenericWaiter const& rhs) : f(rhs.f) {}
+    GenericWaiter& operator = (GenericWaiter const& rhs) { f = rhs.f; return *this; }
 
     virtual void Notify() CRUNCH_OVERRIDE
     {
