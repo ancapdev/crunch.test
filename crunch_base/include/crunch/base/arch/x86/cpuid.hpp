@@ -1,6 +1,7 @@
 #ifndef CRUNCH_BASE_ARCH_X86_CPUID_HPP
 #define CRUNCH_BASE_ARCH_X86_CPUID_HPP
 
+#include "crunch/base/enum_class.hpp"
 #include "crunch/base/platform.hpp"
 #include "crunch/base/stdint.hpp"
 
@@ -20,7 +21,7 @@ struct CpuidResult
     uint32 edx;
 };
 
-enum class CpuidFunction : uint32
+CRUNCH_ENUM_CLASS CpuidFunction : uint32
 {
     VendorId = 0,
     ProcessorInfoAndFeatures = 1,
