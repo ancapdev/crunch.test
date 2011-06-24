@@ -8,9 +8,7 @@
 #   error "Unsupported archicture"
 #endif
 
-#if defined (CRUNCH_COMPILER_MSVC)
-#   include <intrin.h>
-#endif
+#include <string>
 
 namespace Crunch {
 
@@ -39,34 +37,15 @@ enum class CpuidFunction : uint32
     AddressSizes = 0x80000008
 };
 
-#if defined (CRUNCH_COMPILER_MSVC)
+CpuidResult QueryCpuid(uint32 function, uint32 extendedFunction = 0);
 
-inline CpuidResult QueryCpuid(uint32 function, uint32 extendedFunction = 0)
+inline CpuidResult QueryCpuid(CpuidFunction function, uint32 extendedFunction = 0)
 {
-    int result[4];
-    __cpuidex(result, static_cast<int>(function), static_cast<int>(extendedFunction));
-    return CpuidResult{
-        static_cast<uint32>(result[0]),
-        static_cast<uint32>(result[1]),
-        static_cast<uint32>(result[2]),
-        static_cast<uint32>(result[3])};
+    return QueryCpuid(static_cast<uint32>(function), extendedFunction);
 }
 
-#elif defined (CRUNCH_COMPILER_GCC)
-
-inline CpuidResult QueryCpuid(uint32 function, uint32 extendedFunction = 0)
-{
-    CpuidResult result;
-    asm volatile(
-        "cpuid"
-        : "=a"(result.eax), "=b"(result.ebx), "=c"(result.ecx), "=d"(result.edx)
-        : "a"(function), "c"(extendedFunction));
-    return result;
-}
-
-#else
-#   error "Unsupported compiler"
-#endif
+std::string GetCpuidVendorId();
+uint32 GetCpuidMaxFunction();
 
 }
 
