@@ -85,7 +85,8 @@ endmacro()
 set(PROJECTS
   crunch_base
   crunch_concurrency
-  crunch_concurrency_tasks)
+  crunch_concurrency_tasks
+  cpuinfo)
 
 foreach(_p ${PROJECTS})
   include_directories("${CMAKE_SOURCE_DIR}/${_p}/include")
