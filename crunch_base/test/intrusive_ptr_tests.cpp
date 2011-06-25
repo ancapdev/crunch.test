@@ -1,3 +1,6 @@
+// Copyright (c) 2011, Christian Rorvik
+// Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 #include "crunch/base/intrusive_ptr.hpp"
 
 #include <boost/test/test_tools.hpp>

@@ -1,3 +1,6 @@
+# Copyright (c) 2011, Christian Rorvik
+# Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 add_library(crunch_concurrency_tasks_lib
   include/crunch/concurrency/task.hpp
   source/task.cpp)

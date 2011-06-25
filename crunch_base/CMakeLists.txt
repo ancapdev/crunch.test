@@ -1,3 +1,6 @@
+# Copyright (c) 2011, Christian Rorvik
+# Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86" OR
     ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
   set(_platformFiles

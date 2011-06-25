@@ -1,3 +1,6 @@
+// Copyright (c) 2011, Christian Rorvik
+// Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 #include "crunch/base/override.hpp"
 #include "crunch/concurrency/atomic.hpp"
 #include "crunch/concurrency/waitable.hpp"

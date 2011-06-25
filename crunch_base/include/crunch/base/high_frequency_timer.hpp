@@ -1,3 +1,6 @@
+// Copyright (c) 2011, Christian Rorvik
+// Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 #ifndef CRUNCH_HIGH_FREQUENCY_TIMER_HPP
 #define CRUNCH_HIGH_FREQUENCY_TIMER_HPP
 

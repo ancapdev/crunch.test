@@ -1,3 +1,6 @@
+// Copyright (c) 2011, Christian Rorvik
+// Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 #ifndef CRUNCH_BASE_STREAM_AS_BINARY_HPP
 #define CRUNCH_BASE_STREAM_AS_BINARY_HPP
 

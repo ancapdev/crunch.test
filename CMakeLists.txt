@@ -1,3 +1,6 @@
+# Copyright (c) 2011, Christian Rorvik
+# Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 cmake_minimum_required(VERSION 2.8)
 
 #

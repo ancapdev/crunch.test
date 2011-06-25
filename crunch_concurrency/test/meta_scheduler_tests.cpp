@@ -1,3 +1,6 @@
+// Copyright (c) 2011, Christian Rorvik
+// Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 #include "crunch/concurrency/meta_scheduler.hpp"
 
 #include <boost/test/test_tools.hpp>
