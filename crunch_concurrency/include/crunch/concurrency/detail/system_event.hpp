@@ -4,7 +4,7 @@
 #include "crunch/base/platform.hpp"
 
 #if defined (CRUNCH_PLATFORM_WIN32)
-#   include <windows.h>
+#   include "crunch/base/platform/win32/wintypes.hpp"
 #elif defined (CRUNCH_PLATFORM_LINUX)
 #   include <pthread.h>
 #else

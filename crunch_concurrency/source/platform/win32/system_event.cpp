@@ -1,6 +1,8 @@
 #include "crunch/concurrency/detail/system_event.hpp"
 #include "crunch/base/assert.hpp"
 
+#include <windows.h>
+
 namespace Crunch { namespace Concurrency { namespace Detail {
 
 SystemEvent::SystemEvent(bool initialState)
