@@ -16,6 +16,8 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/lock_guard.hpp
   include/crunch/concurrency/memory_order.hpp
   include/crunch/concurrency/meta_scheduler.hpp
+  include/crunch/concurrency/processor_affinity.hpp
+  include/crunch/concurrency/processor_topology.hpp
   include/crunch/concurrency/promise.hpp
   include/crunch/concurrency/scheduler.hpp
   include/crunch/concurrency/thread_local.hpp

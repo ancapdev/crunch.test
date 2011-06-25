@@ -7,7 +7,7 @@ namespace Crunch { namespace Concurrency {
 uint32 GetSystemNumProcessors()
 {
     SYSTEM_INFO info;
-    GetSystemInfo(info);
+    GetSystemInfo(&info);
     return info.dwNumberOfProcessors;
 }
 
