@@ -26,10 +26,10 @@ public:
     MetaScheduler(SchedulerList const& schedulers);
     ~MetaScheduler();
 
-    class ThreadConfig
+    class MetaThreadConfig
     {
     public:
-        ThreadConfig() : mAffinity(0xfffffffful) {}
+        MetaThreadConfig() : mAffinity(0xfffffffful) {}
 
         void SetAffinity(uint32 affinity) { mAffinity = affinity; }
         uint32 GetAffinity() const { return mAffinity; }
@@ -37,8 +37,16 @@ public:
     private:
         uint32 mAffinity;
     };
+
+
+    class MetaThreadHandle
+    {
+    };
+
+    MetaThreadHandle CreateMetaThread(MetaThreadConfig const& config);
+
     
-    void Join(ThreadConfig const& config);
+    void Join(MetaThreadHandle);
 
     void Leave();
 

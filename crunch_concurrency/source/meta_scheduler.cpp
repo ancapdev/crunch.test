@@ -57,6 +57,8 @@ MetaScheduler::MetaScheduler(const SchedulerList& schedulers)
 MetaScheduler::~MetaScheduler()
 {}
 
+
+/*
 void MetaScheduler::Join(ThreadConfig const&)
 {
     CRUNCH_ASSERT_ALWAYS(tCurrentContext == nullptr);
@@ -77,6 +79,7 @@ void MetaScheduler::Leave()
 void MetaScheduler::Run(IWaitable&)
 {
 }
+*/
 
 void WaitFor(IWaitable& waitable, WaitMode)
 {
