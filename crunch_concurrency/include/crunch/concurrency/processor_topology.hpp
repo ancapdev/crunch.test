@@ -7,46 +7,30 @@
 
 namespace Crunch { namespace Concurrency {
 
-uint32 GeSystemtNumProcessors();
+uint32 GetSystemNumProcessors();
 
 class ProcessorTopology
 {
 public:
-    struct LogicalProcessor
+    struct Processor
     {
-        uint32 id;
-        uint32 physicalId;
-        uint32 packageId;
+        uint32 systemId;  ///> Identifier used by the system for this processor. E.g., for processor affinity.
+        uint32 threadId;  ///> Thread ID within the the core
+        uint32 coreId;    ///> Core ID within the package
+        uint32 packageId; ///> Package ID within the system
     };
 
-    struct PhysicalProcessor
-    {
-        uint32 id;
-        uint32 packageId;
-        std::vector<uint32> logicalIds;
-    };
-
-    struct Package
-    {
-        uint32 id;
-        std::vector<uint32> physicalIds;
-        std::vector<uint32> logicalIds;
-    };
-
-    typedef std::vector<LogicalProcessor> LogicalProcessorList;
-    typedef std::vector<PhysicalProcessor> PhysicalProcessorList;
-    typedef std::vector<Package> PackageList;
+    typedef std::vector<Processor> ProcessorList;
 
     ProcessorTopology();
 
-    LogicalProcessorList const& GetLogicalProcessors() const { return mLogicalProcessors; }
-    PhysicalProcessorList const& GetPhysicalProcessors() const { return mPhysicalProcessors; }
-    PackageList const& GetPackages() const { return mPackages; }
+    ProcessorList const& GetProcessors() const { return mProcessors; }
+
+    ProcessorList GetProcessorsOnCore(uint32 coreId);
+    ProcessorList GetProcessorsOnPackage(uint32 packageId);
 
 private:
-    LogicalProcessorList mLogicalProcessors;
-    PhysicalProcessorList mPhysicalProcessors;
-    PackageList mPackages;
+    ProcessorList mProcessors;
 };
 
 }}

@@ -14,19 +14,16 @@ class ProcessorAffinity
 public:
     ProcessorAffinity();
     ProcessorAffinity(uint32 processorId);
-    ProcessorAffinity(ProcessorTopology::LogicalProcessor const& processor);
-    ProcessorAffinity(ProcessorTopology::PhysicalProcessor const& processor);
-    ProcessorAffinity(ProcessorTopology::Package const& package);
+    ProcessorAffinity(ProcessorTopology::Processor const& processor);
+    ProcessorAffinity(ProcessorTopology::ProcessorList const& processors);
     
     void Set(uint32 processorId);
-    void Set(ProcessorTopology::LogicalProcessor const& processor);
-    void Set(ProcessorTopology::PhysicalProcessor const& processor);
-    void Set(ProcessorTopology::Package const& package);
+    void Set(ProcessorTopology::Processor const& processor);
+    void Set(ProcessorTopology::ProcessorList const& processors);
 
     void Clear(uint32 processorId);
-    void Clear(ProcessorTopology::LogicalProcessor const& processor);
-    void Clear(ProcessorTopology::PhysicalProcessor const& processor);
-    void Clear(ProcessorTopology::Package const& package);
+    void Clear(ProcessorTopology::Processor const& processor);
+    void Clear(ProcessorTopology::ProcessorList const& processors);
 
     bool IsSet(uint32 processorId) const;
 

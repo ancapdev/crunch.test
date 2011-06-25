@@ -13,19 +13,14 @@ ProcessorAffinity::ProcessorAffinity(uint32 processorId)
     Set(processorId);
 }
 
-ProcessorAffinity::ProcessorAffinity(ProcessorTopology::LogicalProcessor const& processor)
+ProcessorAffinity::ProcessorAffinity(ProcessorTopology::Processor const& processor)
 {
     Set(processor);
 }
 
-ProcessorAffinity::ProcessorAffinity(ProcessorTopology::PhysicalProcessor const& processor)
+ProcessorAffinity::ProcessorAffinity(ProcessorTopology::ProcessorList const& processors)
 {
-    Set(processor);
-}
-
-ProcessorAffinity::ProcessorAffinity(ProcessorTopology::Package const& package)
-{
-    Set(package);
+    Set(processors);
 }
 
 void ProcessorAffinity::Set(uint32 processorId)
@@ -33,19 +28,14 @@ void ProcessorAffinity::Set(uint32 processorId)
     mProcessorMask.set(processorId);
 }
 
-void ProcessorAffinity::Set(ProcessorTopology::LogicalProcessor const& processor)
+void ProcessorAffinity::Set(ProcessorTopology::Processor const& processor)
 {
-    Set(processor.id);
+    Set(processor.systemId);
 }
 
-void ProcessorAffinity::Set(ProcessorTopology::PhysicalProcessor const& processor)
+void ProcessorAffinity::Set(ProcessorTopology::ProcessorList const& processors)
 {
-    std::for_each(processor.logicalIds.begin(), processor.logicalIds.end(), [&] (uint32 id) { Set(id); });
-}
-
-void ProcessorAffinity::Set(ProcessorTopology::Package const& package)
-{
-    std::for_each(package.logicalIds.begin(), package.logicalIds.end(), [&] (uint32 id) { Set(id); });
+    std::for_each(processors.begin(), processors.end(), [&] (ProcessorTopology::Processor const& p) { Set(p); });
 }
 
 void ProcessorAffinity::Clear(uint32 processorId)
@@ -53,19 +43,14 @@ void ProcessorAffinity::Clear(uint32 processorId)
     mProcessorMask.reset(processorId);
 }
 
-void ProcessorAffinity::Clear(ProcessorTopology::LogicalProcessor const& processor)
+void ProcessorAffinity::Clear(ProcessorTopology::Processor const& processor)
 {
-    mProcessorMask.reset(processor.id);
+    mProcessorMask.reset(processor.systemId);
 }
 
-void ProcessorAffinity::Clear(ProcessorTopology::PhysicalProcessor const& processor)
+void ProcessorAffinity::Clear(ProcessorTopology::ProcessorList const& processors)
 {
-    std::for_each(processor.logicalIds.begin(), processor.logicalIds.end(), [&] (uint32 id) { Clear(id); });
-}
-
-void ProcessorAffinity::Clear(ProcessorTopology::Package const& package)
-{
-    std::for_each(package.logicalIds.begin(), package.logicalIds.end(), [&] (uint32 id) { Clear(id); });
+    std::for_each(processors.begin(), processors.end(), [&] (ProcessorTopology::Processor const& p) { Clear(p); });
 }
 
 bool ProcessorAffinity::IsSet(uint32 processorId) const
