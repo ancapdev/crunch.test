@@ -9,7 +9,10 @@ namespace Crunch {
 template<typename T>
 T ExtractBits(T value, uint8 first, uint8 last)
 {
-    return (value & ((1 << (last + 1)) - 1)) >> first;
+    if (last >= sizeof(T) * 8 - 1)
+        return value >> first;
+    else
+        return (value & ((T(1) << (last + 1)) - T(1))) >> first;
 }
 
 }
