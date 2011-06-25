@@ -15,6 +15,54 @@ T ExtractBits(T value, uint8 first, uint8 last)
         return (value & ((T(1) << (last + 1)) - T(1))) >> first;
 }
 
+template<typename T>
+T CountLeadingZeros(T value)
+{
+    if (value == 0)
+        return sizeof(T) * 8;
+
+    T count = 0;
+    while ((value & (T(1) << (sizeof(T) * 8 - 1))) == 0)
+    {
+        value <<= 1;
+        count++;
+    }
+
+    return count;
+}
+
+// Undefined for 0
+template<typename T>
+T Log2Floor(T value)
+{
+    return (sizeof(T) * 8 - 1) - CountLeadingZeros(value);
+}
+
+// Undefined for 0
+template<typename T>
+T Log2Ceil(T value)
+{
+    return sizeof(T) * 8 - CountLeadingZeros(value - 1);
+}
+
+template<typename T>
+T Pow2Floor(T value)
+{
+    if (value == 0)
+        return 0;
+    else
+        return T(1) << ((sizeof(T) * 8 - 1) - CountLeadingZeros(value));
+}
+
+template<typename T>
+T Pow2Ceil(T value)
+{
+    if (value == 0)
+        return 0;
+    else
+        return T(1) << (sizeof(T) * 8 - CountLeadingZeros(value - 1));
+}
+
 }
 
 #endif
