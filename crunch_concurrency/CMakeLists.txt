@@ -1,4 +1,5 @@
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86" OR
+    ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
   set(_platformFiles
     include/crunch/concurrency/platform/${PLATFORM_NAME}/atomic.hpp
     include/crunch/concurrency/platform/${PLATFORM_NAME}/atomic_ops_x86.hpp
@@ -26,6 +27,10 @@ add_library(crunch_concurrency_lib
   source/event.cpp
   source/future_data.cpp
   source/meta_scheduler.cpp
+  source/processor_affinity.cpp
+  source/processor_topology.cpp
+  source/platform/${PLATFORM_NAME}/processor_affinity.cpp
+  source/platform/${PLATFORM_NAME}/processor_topology.cpp
   source/platform/${PLATFORM_NAME}/system_event.cpp
   source/platform/${PLATFORM_NAME}/system_mutex.cpp
   source/platform/${PLATFORM_NAME}/yield.cpp
@@ -44,7 +49,8 @@ add_executable(crunch_concurrency_test
   test/event_tests.cpp
   test/future_tests.cpp
   test/main.cpp
-  test/meta_scheduler_tests.cpp)
+  test/meta_scheduler_tests.cpp
+  test/processor_topology_tests.cpp)
 
 target_link_libraries(crunch_concurrency_test
   crunch_concurrency_lib)
