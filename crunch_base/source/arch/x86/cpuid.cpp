@@ -1,7 +1,8 @@
 #include "crunch/base/arch/x86/cpuid.hpp"
 
 #if defined (CRUNCH_COMPILER_MSVC)
-#   include <intrin.h>
+    extern "C" void __cpuidex(int a[4], int b, int c);
+#   pragma intrinsic(__cpuidex)
 #endif
 
 namespace Crunch {

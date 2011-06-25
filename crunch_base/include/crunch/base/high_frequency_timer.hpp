@@ -4,7 +4,6 @@
 #include "crunch/base/platform.hpp"
 
 #if defined (CRUNCH_PLATFORM_WIN32)
-#   include <windows.h>
 #elif defined (CRUNCH_PLATFORM_LINUX)
 #   include <time.h>
 #else
@@ -17,7 +16,7 @@ class HighFrequencyTimer
 {
 public:
 #if defined (CRUNCH_PLATFORM_WIN32)
-    typedef LARGE_INTEGER SampleType;
+    typedef __int64 SampleType;
     HighFrequencyTimer();
 #else
     typedef timespec SampleType;
