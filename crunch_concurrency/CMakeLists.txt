@@ -23,6 +23,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/processor_topology.hpp
   include/crunch/concurrency/promise.hpp
   include/crunch/concurrency/scheduler.hpp
+  include/crunch/concurrency/thread.hpp
   include/crunch/concurrency/thread_local.hpp
   include/crunch/concurrency/waitable.hpp
   include/crunch/concurrency/yield.hpp
@@ -38,6 +39,7 @@ add_library(crunch_concurrency_lib
   source/platform/${PLATFORM_NAME}/processor_topology.cpp
   source/platform/${PLATFORM_NAME}/system_event.cpp
   source/platform/${PLATFORM_NAME}/system_mutex.cpp
+  source/platform/${PLATFORM_NAME}/thread.cpp
   source/platform/${PLATFORM_NAME}/yield.cpp
   ${_platformFiles})
 

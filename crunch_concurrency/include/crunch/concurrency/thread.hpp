@@ -1,10 +1,13 @@
+// Copyright (c) 2011, Christian Rorvik
+// Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 #ifndef CRUNCH_CONCURRENCY_THREAD_HPP
 #define CRUNCH_CONCURRENCY_THREAD_HPP
 
 #include "crunch/base/platform.hpp"
 
 #if defined (CRUNCH_PLATFORM_WIN32)
-#   include <windows.h>
+#   include "crunch/base/platform/win32/wintypes.hpp"
 #elif defined (CRUNCH_PLATFORM_LINUX)
 #   include <sys/types.h>
 #else
