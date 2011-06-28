@@ -12,6 +12,11 @@
 
 #include <algorithm>
 
+
+// TODO: remove
+#include "crunch/base/stream_as_binary.hpp"
+#include <iostream>
+
 namespace Crunch { namespace Concurrency {
 
 #if defined (CRUNCH_ARCH_X86)
@@ -52,10 +57,24 @@ namespace
 
     ProcessorTopology::ProcessorList EnumerateFromCpuidx2ApicId()
     {
+        // TODO: this code isn't working and needs testing.
+        std::cout << "Enumerating with X2 APIC ID" << std::endl;
+
         const ProcessorAffinity processAffinity = GetCurrentProcessAffinity();
         const uint32 highest = processAffinity.GetHighestSetProcessor();
 
         ProcessorTopology::ProcessorList processors;
+
+        for (uint32 i = 0; ; ++i)
+        {
+            CpuidResult const res = QueryCpuid(11, i);
+            std::cout << "CPUID(0Bh, " << i << ")" << std::endl;
+            std::cout << ExtractBits(res.eax, 0, 4) << std::endl;
+            std::cout << ExtractBits(res.ebx, 0, 15) << std::endl;
+            std::cout << ExtractBits(res.ecx, 0, 7) << std::endl;
+            if (ExtractBits(res.ebx, 0, 15) == 0)
+                break;
+        }
 
         for (uint32 i = 0; i <= highest; ++i)
         {
@@ -79,6 +98,13 @@ namespace
             ProcessorTopology::Processor const processor = { i, threadId, coreId, packageId };
             processors.push_back(processor);
 
+            std::cout << "SMT bits: " << smtBits << std::endl;
+            std::cout << "Core bits: " << coreAndSmtBits - smtBits << std::endl;
+            std::cout << "X2 APIC ID: " << StreamAsBinary(x2apic) << std::endl;
+            std::cout << "Core mask: " << StreamAsBinary(coreMask) << std::endl;
+            std::cout << ExtractBits(QueryCpuid(11, 0).ecx, 8, 15) << std::endl;
+            std::cout << ExtractBits(QueryCpuid(11, 1).ecx, 8, 15) << std::endl;
+
             SetCurrentThreadAffinity(oldAffinity);
         }
 
@@ -90,10 +116,10 @@ namespace
         // Reference: http://software.intel.com/en-us/articles/intel-64-architecture-processor-topology-enumeration/
 
         if (GetCpuidMaxFunction() >= 11 &&
-            QueryCpuid(0).ebx != 0)
+            QueryCpuid(11).ebx != 0)
         {
             // Enumerate using leaf 11
-            return ProcessorTopology::ProcessorList();
+            return EnumerateFromCpuidx2ApicId();
         }
         else if (GetCpuidMaxFunction() >= 4)
         {
