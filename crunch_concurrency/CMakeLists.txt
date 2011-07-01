@@ -57,7 +57,8 @@ add_executable(crunch_concurrency_test
   test/future_tests.cpp
   test/main.cpp
   test/meta_scheduler_tests.cpp
-  test/processor_topology_tests.cpp)
+  test/processor_topology_tests.cpp
+  test/thread_tests.cpp)
 
 target_link_libraries(crunch_concurrency_test
   crunch_concurrency_lib)
