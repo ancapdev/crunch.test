@@ -128,7 +128,7 @@ inline Thread& Thread::operator = (Thread&& rhs)
 
 inline bool Thread::IsJoinable() const
 {
-    return mData != nullptr;
+    return !!mData;
 }
 
 inline void Thread::operator () ()

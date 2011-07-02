@@ -18,7 +18,9 @@ public:
         : mMessage(message)
     {}
 
-    char const* what() const CRUNCH_OVERRIDE
+    ~Exception() noexcept {}
+
+    char const* what() const noexcept CRUNCH_OVERRIDE
     {
         return mMessage.c_str();
     }

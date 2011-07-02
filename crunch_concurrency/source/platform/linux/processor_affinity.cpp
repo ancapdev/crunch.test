@@ -41,30 +41,26 @@ namespace
     }
 }
 
-ProcessorAffinity SetThreadAffinity(ThreadId thread, ProcessorAffinity const& affinity)
-{
-    ProcessorAffinity old = GetProcessAffinity(thread);
-
-    cpu_set_t set = CreateCpuSet(affinity);
-    int result = sched_setaffinity(thread, sizeof(set), &set);
-    CRUNCH_ASSERT_ALWAYS(result == 0);
-
-    return old;
-}
-
-void SetProcessAffinity(ProcessId process, ProcessorAffinity const& affinity)
+void SetProcessAffinity(pid_t process, ProcessorAffinity const& affinity)
 {
     cpu_set_t set = CreateCpuSet(affinity);
     int result = sched_setaffinity(process, sizeof(set), &set);
     CRUNCH_ASSERT_ALWAYS(result == 0);
 }
 
-ProcessorAffinity GetProcessAffinity(ProcessId process)
+ProcessorAffinity GetProcessAffinity(pid_t process)
 {
     cpu_set_t set;
     int result = sched_getaffinity(process, sizeof(set), &set);
     CRUNCH_ASSERT_ALWAYS(result == 0);
     return CreateAffinity(&set);
+}
+
+ProcessorAffinity SetThreadAffinity(pid_t thread, ProcessorAffinity const& affinity)
+{
+    ProcessorAffinity old = GetProcessAffinity(thread);
+    SetProcessAffinity(thread, affinity);
+    return old;
 }
 
 ProcessorAffinity SetCurrentThreadAffinity(ProcessorAffinity const& affinity)

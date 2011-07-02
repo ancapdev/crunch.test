@@ -37,6 +37,9 @@ add_library(crunch_concurrency_lib
   source/meta_scheduler.cpp
   source/processor_affinity.cpp
   source/processor_topology.cpp
+  source/thread.cpp
+  source/thread_data.hpp
+  source/thread_data.cpp
   source/platform/${PLATFORM_NAME}/processor_affinity.cpp
   source/platform/${PLATFORM_NAME}/processor_topology.cpp
   source/platform/${PLATFORM_NAME}/system_event.cpp

@@ -2,62 +2,53 @@
 // Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
 
 #include "crunch/concurrency/thread.hpp"
+#include "crunch/concurrency/exceptions.hpp"
+
 #include "crunch/base/assert.hpp"
 
-#include <exception>
+#include "../../thread_data.hpp"
+
 #include <memory>
 
 namespace Crunch { namespace Concurrency {
 
-namespace
+void Thread::Create(std::function<void ()>&& f)
 {
-    void* ThreadEntryPoint(void* argument)
+    mData.reset(new Data(std::move(f)));
+    mData->self = mData;
+
+    int result = pthread_create(&mData->id, nullptr, &Data::EntryPoint, mData.get());
+    if (result != 0)
     {
-        typedef std::function<void ()> F;
-        std::unique_ptr<F> f(reinterpret_cast<F*>(argument));
-
-        try
-        {
-            (*f)();
-        }
-        catch (...)
-        {
-            std::terminate();
-        }
-
-        return nullptr;
+        mData->self.reset();
+        mData.reset();
+        throw ThreadResourceError();
     }
 }
 
-void Thread::Create(std::function<void ()>&& f)
+void Thread::Detach()
 {
-    std::function<void ()>* fp(new std::function<void ()>(std::move(f)));
-
-    int result = pthread_create(&mHandle, nullptr, &ThreadEntryPoint, fp);
-
-    if (result != 0)
+    if (mData)
     {
-        delete fp;
-        // TODO: throw thread_resource_error
-    }
-    else
-    {
-        mInitialized = true;
+        CRUNCH_ASSERT_ALWAYS(pthread_detach(mData->id) == 0);
+        mData.reset();
     }
 }
 
 void Thread::Join()
 {
-    CRUNCH_ASSERT_ALWAYS(IsJoinable());
-    CRUNCH_ASSERT_ALWAYS(pthread_join(mHandle, nullptr) == 0);
-    mInitialized = false;
+    ThreadCancellationPoint();
+
+    if (mData)
+    {
+        CRUNCH_ASSERT_ALWAYS(pthread_join(mData->id, nullptr) == 0);
+        mData.reset();
+    }
 }
 
-void Thread::Detach()
+ThreadId GetThreadId()
 {
-    CRUNCH_ASSERT_ALWAYS(IsJoinable());
-    CRUNCH_ASSERT_ALWAYS(pthread_detach(mHandle) == 0);
-    mInitialized = false;
+    return pthread_self();
 }
 
 }}
