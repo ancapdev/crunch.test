@@ -20,12 +20,54 @@
 
 namespace Crunch { namespace Concurrency {
 
+
 #if defined (CRUNCH_PLATFORM_WIN32)
-// TODO: must wrap so it can default construct to a unique value
-typedef DWORD ThreadId;
+
+class ThreadId
+{
+public:
+    ThreadId() : mId(0) {}
+
+    explicit ThreadId(DWORD id) : mId(id) {}
+
+    bool operator == (ThreadId rhs) const { return mId == rhs.mId; }
+    bool operator != (ThreadId rhs) const { return mId != rhs.mId; }
+
+private:
+    DWORD mId;
+};
+
 #else
-typedef pthread_t ThreadId;
+
+class ThreadId
+{
+public:
+    ThreadId() : mSet(false) {}
+
+    explicit ThreadId(pthread_t id) : mId(id), mSet(true) {}
+
+    bool operator == (ThreadId const& rhs) const
+    {
+        if (!mSet)
+            return !rhs.mSet;
+        else
+            return pthread_equal(mId, rhs.mId);
+    }
+
+    bool operator != (ThreadId const& rhs) const
+    {
+        return !(*this == rhs);
+    }
+
+    pthread_t const& GetNative() const { return mId; }
+
+private:
+    pthread_t mId;
+    bool mSet;
+};
+
 #endif
+
 
 class Thread : NonCopyable
 {

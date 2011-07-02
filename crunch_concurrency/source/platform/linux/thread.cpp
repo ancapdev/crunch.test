@@ -17,20 +17,22 @@ void Thread::Create(std::function<void ()>&& f)
     mData.reset(new Data(std::move(f)));
     mData->self = mData;
 
-    int result = pthread_create(&mData->id, nullptr, &Data::EntryPoint, mData.get());
+    pthread_t id;
+    int result = pthread_create(&id, nullptr, &Data::EntryPoint, mData.get());
     if (result != 0)
     {
         mData->self.reset();
         mData.reset();
         throw ThreadResourceError();
     }
+    mData->id = ThreadId(id);
 }
 
 void Thread::Detach()
 {
     if (mData)
     {
-        CRUNCH_ASSERT_ALWAYS(pthread_detach(mData->id) == 0);
+        CRUNCH_ASSERT_ALWAYS(pthread_detach(mData->id.GetNative()) == 0);
         mData.reset();
     }
 }
@@ -41,14 +43,14 @@ void Thread::Join()
 
     if (mData)
     {
-        CRUNCH_ASSERT_ALWAYS(pthread_join(mData->id, nullptr) == 0);
+        CRUNCH_ASSERT_ALWAYS(pthread_join(mData->id.GetNative(), nullptr) == 0);
         mData.reset();
     }
 }
 
 ThreadId GetThreadId()
 {
-    return pthread_self();
+    return ThreadId(pthread_self());
 }
 
 }}
