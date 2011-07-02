@@ -10,27 +10,22 @@
 #if defined (CRUNCH_PLATFORM_WIN32)
 #   include "crunch/base/platform/win32/wintypes.hpp"
 #elif defined (CRUNCH_PLATFORM_LINUX)
-#   include <sys/types.h>
 #   include <pthread.h>
 #else
 #   error "Unsupported platform"
 #endif
 
 #include <functional>
+#include <memory>
 
 namespace Crunch { namespace Concurrency {
 
 #if defined (CRUNCH_PLATFORM_WIN32)
-typedef HANDLE ThreadId;
-typedef HANDLE ProcessId;
+// TODO: must wrap so it can default construct to a unique value
+typedef DWORD ThreadId;
 #else
-typedef pid_t ThreadId;
-typedef pid_t ProcessId;
+typedef pthread_t ThreadId;
 #endif
-
-ThreadId GetCurrentThreadId();
-ProcessId GetCurrentProcessId();
-
 
 class Thread : NonCopyable
 {
@@ -42,50 +37,104 @@ public:
     typedef pthread_t PlatformHandleType;
 #endif
 
-    Thread()
-        : mInitialized(false)
-    {}
+    Thread() {}
 
-    ~Thread()
-    {
-        if (IsJoinable())
-            Detach();
-    }
+    ~Thread();
 
     template<typename F>
-    explicit Thread(F f)
-    {
-        Create(std::function<void ()>(f));
-    }
+    explicit Thread(F f);
 
     Thread(Thread&& rhs);
+
     Thread& operator = (Thread&& rhs);
 
     ThreadId GetId() const;
 
-    bool IsJoinable() const
-    {
-        return mInitialized;
-    }
+    bool IsJoinable() const;
 
     void Join();
 
     void Detach();
 
-    // void Cancel();
-    // bool IsCancellationRequested() const;
+    void Cancel();
 
-    PlatformHandleType GetPlatformHandle() const
+    bool IsCancellationRequested() const;
+
+    PlatformHandleType GetPlatformHandle() const;
+
+    void operator () ();
+
+private:
+    friend void SetThreadCancellationPolicy(bool);
+    friend void ThreadCancellationPoint();
+    friend bool IsThreadCancellationEnabled();
+    friend bool IsThreadCancellationRequested();
+
+    struct Data;
+    typedef std::shared_ptr<Data> DataPtr;
+
+    void Create(std::function<void ()>&& f);
+
+    DataPtr mData;
+};
+
+ThreadId GetThreadId();
+
+void SetThreadCancellationPolicy(bool enableCancellation);
+
+void ThreadCancellationPoint();
+
+bool IsThreadCancellationEnabled();
+
+bool IsThreadCancellationRequested();
+
+template<bool EnableCancellation>
+class ScopedThreadCancellationPolicy : NonCopyable
+{
+public:
+    explicit ScopedThreadCancellationPolicy()
+        : mPreviousState(IsThreadCancellationEnabled())
     {
-        return mHandle;
+        SetThreadCancellationPolicy(EnableCancellation);
+    }
+
+    ~ScopedThreadCancellationPolicy()
+    {
+        SetThreadCancellationPolicy(mPreviousState);
     }
 
 private:
-    void Create(std::function<void ()>&& f);
-
-    bool mInitialized;
-    PlatformHandleType mHandle;
+    bool mPreviousState;
 };
+
+typedef ScopedThreadCancellationPolicy<true> ScopedEnableThreadCancellation;
+typedef ScopedThreadCancellationPolicy<false> ScopedDiableThreadCancellation;
+
+template<typename F>
+Thread::Thread(F f)
+{
+    Create(std::function<void ()>(f));
+}
+
+inline Thread::Thread(Thread&& rhs)
+    : mData(std::move(rhs.mData))
+{}
+
+inline Thread& Thread::operator = (Thread&& rhs)
+{
+    mData = std::move(rhs.mData);
+    return *this;
+}
+
+inline bool Thread::IsJoinable() const
+{
+    return mData != nullptr;
+}
+
+inline void Thread::operator () ()
+{
+    Join();
+}
 
 }}
 

@@ -14,6 +14,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/atomic.hpp
   include/crunch/concurrency/lock_free_slist.hpp
   include/crunch/concurrency/event.hpp
+  include/crunch/concurrency/exceptions.hpp
   include/crunch/concurrency/fence.hpp
   include/crunch/concurrency/future.hpp
   include/crunch/concurrency/lock_guard.hpp
@@ -31,6 +32,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/detail/system_event.hpp
   include/crunch/concurrency/detail/system_mutex.hpp
   source/event.cpp
+  source/exceptions.cpp
   source/future_data.cpp
   source/meta_scheduler.cpp
   source/processor_affinity.cpp

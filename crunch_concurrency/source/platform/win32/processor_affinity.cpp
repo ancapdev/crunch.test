@@ -37,20 +37,20 @@ namespace
     }
 }
 
-ProcessorAffinity SetThreadAffinity(ThreadId thread, ProcessorAffinity const& affinity)
+ProcessorAffinity SetThreadAffinity(HANDLE thread, ProcessorAffinity const& affinity)
 {
     DWORD_PTR result = SetThreadAffinityMask(thread, MaskFromAffinity(affinity));
     CRUNCH_ASSERT_ALWAYS(result != 0);
     return AffinityFromMask(result);
 }
 
-void SetProcessAffinity(ProcessId process, ProcessorAffinity const& affinity)
+void SetProcessAffinity(HANDLE process, ProcessorAffinity const& affinity)
 {
     BOOL result = SetProcessAffinityMask(process, MaskFromAffinity(affinity));
     CRUNCH_ASSERT_ALWAYS(result == TRUE);
 }
 
-ProcessorAffinity GetProcessAffinity(ProcessId process)
+ProcessorAffinity GetProcessAffinity(HANDLE process)
 {
     DWORD_PTR processMask;
     DWORD_PTR systemMask;

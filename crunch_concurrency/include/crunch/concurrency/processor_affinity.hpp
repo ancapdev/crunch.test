@@ -48,9 +48,11 @@ ProcessorAffinity& operator ^= (ProcessorAffinity& lhs, ProcessorAffinity rhs);
 
 
 /// \return Old affinity
+/*
 ProcessorAffinity SetThreadAffinity(ThreadId thread, ProcessorAffinity const& affinity);
 void SetProcessAffinity(ProcessId process, ProcessorAffinity const& affinity);
 ProcessorAffinity GetProcessAffinity(ProcessId process);
+*/
 
 ProcessorAffinity SetCurrentThreadAffinity(ProcessorAffinity const& affinity);
 void SetCurrentProcessAffinity(ProcessorAffinity const& affinity);
