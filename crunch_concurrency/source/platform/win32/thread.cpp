@@ -19,13 +19,15 @@ void Thread::Create(std::function<void ()>&& f)
     mData.reset(new Data(std::move(f)));
     mData->self = mData;
 
-    mData->handle = ::CreateThread(NULL, 0, &Data::EntryPoint, mData.get(), 0, &mData->id);
+    DWORD id;
+    mData->handle = ::CreateThread(NULL, 0, &Data::EntryPoint, mData.get(), 0, &id);
     if (mData->handle == NULL)
     {
         mData->self.reset();
         mData.reset();
         throw ThreadResourceError();
     }
+    mData->id = ThreadId(id);
 }
 
 void Thread::Detach()
@@ -51,7 +53,7 @@ void Thread::Join()
 
 ThreadId GetThreadId()
 {
-    return ::GetCurrentThreadId();
+    return ThreadId(::GetCurrentThreadId());
 }
 
 }}
