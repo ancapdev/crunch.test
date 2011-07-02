@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 2.8)
 #
 if(MSVC)
   add_definitions("-D_WIN32_WINNT=0x0501")
+  add_definitions("-Dnoexcept=throw()")
 
   # Enable parallel compilation
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
@@ -25,6 +26,7 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4480 /wd4481 /wd4482 /wd4127 /wd4535 /wd4702")
 else()
   add_definitions("-Dnullptr=__null")
+  add_definitions("-Dnoexcept=throw()")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
   if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
     # Enable cmpxchg16
