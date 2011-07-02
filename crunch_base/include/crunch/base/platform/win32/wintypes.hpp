@@ -9,5 +9,6 @@
 //
 
 typedef void* HANDLE;
+typedef unsigned long DWORD;
 
 #endif
