@@ -19,6 +19,7 @@ add_library(crunch_base_lib
   include/crunch/base/assert.hpp
   include/crunch/base/bit_utility.hpp
   include/crunch/base/debug.hpp
+  include/crunch/base/exception.hpp
   include/crunch/base/enum_class.hpp
   include/crunch/base/high_frequency_timer.hpp
   include/crunch/base/intrusive_ptr.hpp
