@@ -9,6 +9,10 @@
 
 #include <memory>
 
+#if defined (CRUNCH_PLATFORM_WIN32)
+#   include <windows.h>
+#endif
+
 namespace Crunch { namespace Concurrency {
 
 struct Thread::Data
