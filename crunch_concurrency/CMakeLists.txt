@@ -29,6 +29,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/waitable.hpp
   include/crunch/concurrency/yield.hpp
   include/crunch/concurrency/detail/future_data.hpp
+  include/crunch/concurrency/detail/system_condition.hpp
   include/crunch/concurrency/detail/system_event.hpp
   include/crunch/concurrency/detail/system_mutex.hpp
   source/event.cpp
@@ -42,6 +43,7 @@ add_library(crunch_concurrency_lib
   source/thread_data.cpp
   source/platform/${PLATFORM_NAME}/processor_affinity.cpp
   source/platform/${PLATFORM_NAME}/processor_topology.cpp
+  source/platform/${PLATFORM_NAME}/system_condition.cpp
   source/platform/${PLATFORM_NAME}/system_event.cpp
   source/platform/${PLATFORM_NAME}/system_mutex.cpp
   source/platform/${PLATFORM_NAME}/thread.cpp

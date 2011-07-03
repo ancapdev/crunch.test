@@ -3,31 +3,35 @@
 
 #include "crunch/concurrency/detail/system_mutex.hpp"
 
+#include <windows.h>
+
 namespace Crunch { namespace Concurrency { namespace Detail {
 
 SystemMutex::SystemMutex()
 {
-    InitializeCriticalSection(&mCriticalSection);
+    static_assert(sizeof(CriticalSectionStorageType) <= sizeof(CRITICAL_SECTION), "Insufficient storage space for CRITICAL_SECTION");
+
+    InitializeCriticalSection(reinterpret_cast<CRITICAL_SECTION*>(&mCriticalSectionStorage));
 }
 
 SystemMutex::~SystemMutex()
 {
-    DeleteCriticalSection(&mCriticalSection);
+    DeleteCriticalSection(reinterpret_cast<CRITICAL_SECTION*>(&mCriticalSectionStorage));
 }
 
 bool SystemMutex::TryLock()
 {
-    return TryEnterCriticalSection(&mCriticalSection) == TRUE;
+    return TryEnterCriticalSection(reinterpret_cast<CRITICAL_SECTION*>(&mCriticalSectionStorage)) == TRUE;
 }
 
 void SystemMutex::Lock()
 {
-    EnterCriticalSection(&mCriticalSection);
+    EnterCriticalSection(reinterpret_cast<CRITICAL_SECTION*>(&mCriticalSectionStorage));
 }
 
 void SystemMutex::Unlock()
 {
-    LeaveCriticalSection(&mCriticalSection);
+    LeaveCriticalSection(reinterpret_cast<CRITICAL_SECTION*>(&mCriticalSectionStorage));
 }
 
 }}}

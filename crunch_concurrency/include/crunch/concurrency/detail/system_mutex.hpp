@@ -8,7 +8,7 @@
 #include "crunch/concurrency/lock_guard.hpp"
 
 #if defined (CRUNCH_PLATFORM_WIN32)
-#   include <windows.h>
+#   include <type_traits>
 #elif defined (CRUNCH_PLATFORM_LINUX)
 #   include <pthread.h>
 #else
@@ -33,10 +33,13 @@ public:
     void Unlock();
 
 private:
-#if defined (CRUNCH_PLATFORM_LINUX)
+    friend class SystemCondition;
+
+#if defined (CRUNCH_PLATFORM_WIN32)
+    typedef std::aligned_storage<40, 8>::type CriticalSectionStorageType;
+    CriticalSectionStorageType mCriticalSectionStorage;
+#else
     pthread_mutex_t mMutex;
-#elif defined (CRUNCH_PLATFORM_WIN32)
-    CRITICAL_SECTION mCriticalSection;
 #endif
 };
 
