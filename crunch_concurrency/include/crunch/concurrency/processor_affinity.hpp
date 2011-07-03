@@ -30,6 +30,8 @@ public:
 
     bool IsSet(uint32 processorId) const;
 
+    bool IsEmpty() const;
+
     uint32 GetHighestSetProcessor() const;
 
 private:

@@ -61,6 +61,11 @@ bool ProcessorAffinity::IsSet(uint32 processorId) const
     return mProcessorMask.test(processorId);
 }
 
+bool ProcessorAffinity::IsEmpty() const
+{
+    return !mProcessorMask.any();
+}
+
 uint32 ProcessorAffinity::GetHighestSetProcessor() const
 {
     for (uint32 i = MaxProcessorId; i <= MaxProcessorId; --i)
