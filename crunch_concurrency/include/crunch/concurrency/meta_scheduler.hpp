@@ -5,6 +5,7 @@
 #define CRUNCH_CONCURRENCY_META_SCHEDULER_HPP
 
 #include "crunch/base/stdint.hpp"
+#include "crunch/concurrency/processor_affinity.hpp"
 #include "crunch/concurrency/scheduler.hpp"
 #include "crunch/concurrency/thread_local.hpp"
 #include "crunch/concurrency/waitable.hpp"
@@ -32,15 +33,18 @@ public:
     class MetaThreadConfig
     {
     public:
-        MetaThreadConfig() : mAffinity(0xfffffffful) {}
+        MetaThreadConfig() : mSchedulerAffinity(0xfffffffful) {}
 
-        void SetAffinity(uint32 affinity) { mAffinity = affinity; }
-        uint32 GetAffinity() const { return mAffinity; }
+        void SetSchedulerAffinity(uint32 affinity) { mSchedulerAffinity = affinity; }
+        uint32 GetSchedulerAffinity() const { return mSchedulerAffinity; }
+
+        void SetProcessorAffinity(ProcessorAffinity const& affinity) { mProcessorAffinity = affinity; }
+        ProcessorAffinity const& GetProcessorAffinity() const { return mProcessorAffinity; }
 
     private:
-        uint32 mAffinity;
+        uint32 mSchedulerAffinity; ///> Determines which schedulers run on this meta thread
+        ProcessorAffinity mProcessorAffinity;
     };
-
 
     class MetaThreadHandle
     {
@@ -48,39 +52,26 @@ public:
 
     MetaThreadHandle CreateMetaThread(MetaThreadConfig const& config);
 
-    
-    void Join(MetaThreadHandle);
-
-    void Leave();
-
     void Run(IWaitable& until);
-
-    /*
-    // Run the scheduler on this thread.
-    // TODO: mask for which types of schedulers to run? or simply have multiple meta schedulers for that purpose?
-    // - Could have a two way affinity mask, one for the scheduler and one for the thread. If their conjunction is non-zero run the scheduler
-    // - Should maybe notify a scheduler that it is not running on a particular thread. E.g., to orphan work to other threads immediately.
-    void Run();
-
-    // Interrupt all threads running the scheduler
-    void InterruptAll();
-
-    // Interrupt the current thread's scheduler.
-    void InterruptCurrent();
-    */
 
 private:
     friend void WaitFor(IWaitable&, WaitMode);
     friend void WaitForAll(IWaitable**, std::size_t, WaitMode);
     friend void WaitForAny(IWaitable**, std::size_t, WaitMode);
 
+    class MetaThread;
+    typedef std::unique_ptr<MetaThread> MetaThreadPtr;
+    typedef std::vector<MetaThreadPtr> MetaThreadList;
+
     class Context;
     typedef std::unique_ptr<Context> ContextPtr;
-
     typedef std::vector<ContextPtr> ContextList;
 
     SchedulerList mSchedulers;
     Detail::SystemMutex mSchedulersLock;
+
+    MetaThreadList mIdleMetaThreads;
+    Detail::SystemMutex mMetaThreadsLock;
 
     ContextList mContexts;
     Detail::SystemMutex mContextsLock;

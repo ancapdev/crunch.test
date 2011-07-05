@@ -53,6 +53,17 @@ struct ContextRunState : Waiter
     }
 };
 
+class MetaScheduler::MetaThread
+{
+public:
+    MetaThread(MetaThreadConfig const& config)
+        : mConfig(config)
+    {}
+
+private:
+    MetaThreadConfig mConfig;
+};
+
 MetaScheduler::MetaScheduler(const SchedulerList& schedulers)
     : mSchedulers(schedulers)
 {}
@@ -60,29 +71,46 @@ MetaScheduler::MetaScheduler(const SchedulerList& schedulers)
 MetaScheduler::~MetaScheduler()
 {}
 
-
-/*
-void MetaScheduler::Join(ThreadConfig const&)
+MetaScheduler::MetaThreadHandle MetaScheduler::CreateMetaThread(MetaThreadConfig const& config)
 {
-    CRUNCH_ASSERT_ALWAYS(tCurrentContext == nullptr);
+    Detail::SystemMutex::ScopedLock lock(mMetaThreadsLock);
 
-    // Set up thread specific data
-    ContextPtr context(new Context(*this));
-    tCurrentContext = context.get();
-    mContexts.push_back(std::move(context));
+    MetaThreadPtr mt(new MetaThread(config));
+    mIdleMetaThreads.push_back(std::move(mt));
+    return MetaThreadHandle();
 }
 
-void MetaScheduler::Leave()
+void MetaScheduler::Run(IWaitable& until)
 {
-    CRUNCH_ASSERT_ALWAYS(tCurrentContext != nullptr);
+    // while not done
+    //     Acquire idle meta thread
+    //     Affinitize to meta thread processor affinity
+    //     Set meta thread in TLS context
+    //     Add schedulers for meta thread
+    // 1:  Run schedulers until idle
+    //         If blocked (from within scheduler -- can't switch meta threads at this point)
+    //             If supported, re-enter scheduler until idle or not blocked or done
+    //             Release meta thread (put in high demand idle list to increase chance of re-acquiring)
+    //             Yield until not blocked or done
+    //             Wait for same meta thread to become available (actually.. must be able to migrate meta thread at this point or might starve)
+    //         If only 1 scheduler active
+    //             Run scheduler until done or meta thread required by other blocked threads
+    //     Release meta thread
+    //     Yield until not-idle or done
+    //     Attempt to re-acquire same meta thread
+    //         If successful
+    //             Goto 1:
+    //         Else
+    //             Notify schedulers of meta thread move
 
-    tCurrentContext = NULL;
+    volatile bool done = false;
+    auto doneWaiter = MakeWaiter([&] {done = true;});
+    until.AddWaiter(&doneWaiter);
+    while (!done)
+    {
+        
+    }
 }
-
-void MetaScheduler::Run(IWaitable&)
-{
-}
-*/
 
 void WaitFor(IWaitable& waitable, WaitMode)
 {
