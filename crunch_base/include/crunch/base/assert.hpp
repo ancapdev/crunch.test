@@ -38,21 +38,21 @@ bool HandleAssert(char const* condition, char const* file, int line, char const*
 #define CRUNCH_ASSERT_MSG_ALWAYS(cond, msg, ...) \
     do \
     { \
-        if (!(cond) && ::Crunch::HandleAssert(#cond, __FILE__, __LINE__, msg, __VA_ARGS__)) \
+        if (!(cond) && ::Crunch::HandleAssert(#cond, __FILE__, __LINE__, msg , ##__VA_ARGS__)) \
             CRUNCH_HALT(); \
     } while(0)
 
 #define CRUNCH_ABORT_ALWAYS(msg, ...) \
     do \
     { \
-        if (::Crunch::HandleAssert(nullptr, __FILE__, __LINE__, msg, __VA_ARGS__)) \
+        if (::Crunch::HandleAssert(nullptr, __FILE__, __LINE__, msg , ##__VA_ARGS__)) \
             CRUNCH_HALT(); \
     } while(0)
 
 #if defined (CRUNCH_ASSERT_ENABLED)
 #   define CRUNCH_ASSERT(cond) CRUNCH_ASSERT_ALWAYS(cond)
-#   define CRUNCH_ASSERT_MSG(cond, msg, ...) CRUNCH_ASSERT_MSG_ALWAYS(cond, msg, __VA_ARGS__)
-#   define CRUNCH_ABORT(msg, ...) CRUNCH_ABORT_ALWAYS(ms, __VA_ARGS__)
+#   define CRUNCH_ASSERT_MSG(cond, msg, ...) CRUNCH_ASSERT_MSG_ALWAYS(cond, msg , ##__VA_ARGS__)
+#   define CRUNCH_ABORT(msg, ...) CRUNCH_ABORT_ALWAYS(msg, __VA_ARGS__)
 #else
 #   define CRUNCH_ASSERT(cond) do { (void)sizeof(cond); } while(0)
 #   define CRUNCH_ASSERT_MSG(cond, msg, ...) do { (void)sizeof(cond); (void)sizeof(msg); } while(0) 
