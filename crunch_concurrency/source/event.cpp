@@ -56,30 +56,14 @@ void Event::RemoveWaiter(Waiter* waiter)
 
     for (;;)
     {
-        if ((reinterpret_cast<std::size_t>(head) & LOCK_BIT) == 0 &&
-            mWaiters.CompareAndSwap(reinterpret_cast<Waiter*>(LOCK_BIT), head))
+        if ((reinterpret_cast<std::size_t>(head) & LOCK_BIT) != 0)
         {
-            Waiter* current = head;
-            if (current == waiter)
-            {
-                head = current->next;
-            }
-            else
-            {
-                while (current->next != nullptr)
-                {
-                    if (current->next == waiter)
-                    {
-                        current->next = waiter->next;
-                        break;
-                    }
-                 
-                    current = current->next;
-                }
-            }
-
+            head = mWaiters.Load(MEMORY_ORDER_RELAXED);
+        }
+        else if (mWaiters.CompareAndSwap(reinterpret_cast<Waiter*>(LOCK_BIT), head))
+        {
+            head = RemoveWaiterFromList(head, waiter);
             mWaiters.Store(head, MEMORY_ORDER_RELEASE);
-
             return;
         }
 
@@ -112,7 +96,7 @@ void Event::Set()
             Waiter* current = head;
             while (current != nullptr)
             {
-                // Cache next now bacause we can't access waiter after calling Notify()
+                // Cache next now because we can't access waiter after calling Notify()
                 Waiter* next = current->next;
                 current->Notify();
                 current = next;
