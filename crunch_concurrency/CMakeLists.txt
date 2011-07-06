@@ -20,6 +20,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/lock_guard.hpp
   include/crunch/concurrency/memory_order.hpp
   include/crunch/concurrency/meta_scheduler.hpp
+  include/crunch/concurrency/mutex.hpp
   include/crunch/concurrency/processor_affinity.hpp
   include/crunch/concurrency/processor_topology.hpp
   include/crunch/concurrency/promise.hpp
@@ -36,6 +37,7 @@ add_library(crunch_concurrency_lib
   source/exceptions.cpp
   source/future_data.cpp
   source/meta_scheduler.cpp
+  source/mutex.cpp
   source/processor_affinity.cpp
   source/processor_topology.cpp
   source/thread.cpp
@@ -64,6 +66,7 @@ add_executable(crunch_concurrency_test
   test/future_tests.cpp
   test/main.cpp
   test/meta_scheduler_tests.cpp
+  test/mutex_tests.cpp
   test/processor_topology_tests.cpp
   test/thread_tests.cpp)
 
