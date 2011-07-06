@@ -17,6 +17,29 @@ struct Waiter
     Waiter* next;
 };
 
+/// Remove waiter from list
+/// \param head Start of list
+/// \param waiter The waiter to remove
+/// \return New head
+inline Waiter* RemoveWaiterFromList(Waiter* head, Waiter* waiter)
+{
+    if (head == waiter)
+        return head->next;
+
+    Waiter* current = head;
+    while (current->next != nullptr)
+    {
+        if (current->next == waiter)
+        {
+            current->next = waiter->next;
+            break;
+        }
+
+        current = current->next;
+    }
+    return head;
+}
+
 template<typename F>
 struct GenericWaiter : Waiter
 {
