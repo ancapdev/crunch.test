@@ -27,12 +27,30 @@ public:
 
     SampleType Sample() const;
     double GetElapsedSeconds(SampleType begin, SampleType end) const;
+    double GetElapsedMilliseconds(SampleType begin, SampleType end) const;
+    double GetElapsedMicroseconds(SampleType begin, SampleType end) const;
+    double GetElapsedNanoseconds(SampleType begin, SampleType end) const;
 
 private:
 #if defined (CRUNCH_PLATFORM_WIN32)
     double mInvFrequency;
 #endif
 };
+
+inline double HighFrequencyTimer::GetElapsedMilliseconds(SampleType begin, SampleType end) const
+{
+    return GetElapsedSeconds(begin, end) * 1000.0;
+}
+
+inline double HighFrequencyTimer::GetElapsedMicroseconds(SampleType begin, SampleType end) const
+{
+    return GetElapsedSeconds(begin, end) * 1000000.0;
+}
+
+inline double HighFrequencyTimer::GetElapsedNanoseconds(SampleType begin, SampleType end) const
+{
+    return GetElapsedSeconds(begin, end) * 1000000000.0;
+}
 
 }
 
