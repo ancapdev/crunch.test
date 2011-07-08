@@ -22,9 +22,9 @@ BOOST_AUTO_TEST_CASE(WaitTest)
     NullWaitable nullWaitable;
     IWaitable* waitables[] = { &nullWaitable };
 
-    WaitFor(nullWaitable, WAIT_MODE_YIELD_PREEMTIVE);
-    WaitForAll(waitables, WAIT_MODE_YIELD_PREEMTIVE);
-    WaitForAny(waitables, WAIT_MODE_YIELD_PREEMTIVE);
+    WaitFor(nullWaitable, WaitMode::Block());
+    WaitForAll(waitables, 1, WaitMode::Block());
+    WaitForAny(waitables, 1, WaitMode::Block());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

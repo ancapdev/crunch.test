@@ -21,7 +21,6 @@ public:
     Context(MetaScheduler& owner)
         : mOwner(owner)
         , mWaitSemaphore(0)
-        , mWaitSpinCount(400)
     {}
 
     void Notify() CRUNCH_OVERRIDE
@@ -29,18 +28,17 @@ public:
         mWaitSemaphore.Post();
     }
 
-    void WaitFor(IWaitable& waitable)
+    void WaitFor(IWaitable& waitable, WaitMode waitMode)
     {
         // TODO: Let active scheduler handle the wait if it can
         // TODO: Keep in mind if active scheduler is a fiber scheduler we might come back on a different system thread.. (and this thread might be used for other things.. i.e. waiter must be stack local)
         waitable.AddWaiter(this);
-        mWaitSemaphore.SpinWait(mWaitSpinCount);
+        mWaitSemaphore.SpinWait(waitMode.spinCount);
     }
 
 private:
     MetaScheduler& mOwner;
     Detail::SystemSemaphore mWaitSemaphore;
-    uint32 mWaitSpinCount;
 };
 
 CRUNCH_THREAD_LOCAL MetaScheduler::Context* MetaScheduler::tCurrentContext = NULL;
@@ -130,12 +128,12 @@ void MetaScheduler::Run(IWaitable& until)
     }
 }
 
-void WaitFor(IWaitable& waitable, WaitMode)
+void WaitFor(IWaitable& waitable, WaitMode waitMode)
 {
     MetaScheduler::Context* context = MetaScheduler::tCurrentContext;
 
     if (context)
-        context->WaitFor(waitable);
+        context->WaitFor(waitable, waitMode);
     else
     {
         auto waiter = MakeWaiter([&] { MetaScheduler::sSharedEvent.Set(); });
@@ -147,7 +145,7 @@ void WaitFor(IWaitable& waitable, WaitMode)
     }
 }
 
-void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode)
+void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
 {
     IWaitable** unordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
     IWaitable** ordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
@@ -171,11 +169,11 @@ void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode)
     {
         // Order dependent doesn't imply fair, so we need to wait for one at a time
         for (std::size_t i = 0; i < orderedCount; ++i)
-            context->WaitFor(*ordered[i]);
+            context->WaitFor(*ordered[i], waitMode);
 
         // TODO: could add all waiters in one go and do only one wait
         for (std::size_t i = 0; i < unorderedCount; ++i)
-            context->WaitFor(*unordered[i]);
+            context->WaitFor(*unordered[i], waitMode);
     }
     else
     {
@@ -196,7 +194,7 @@ void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode)
     }
 }
 
-void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode)
+void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
 {
     struct WaiterHelper : Waiter, NonCopyable
     {
@@ -225,7 +223,7 @@ void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode)
     MetaScheduler::Context* context = MetaScheduler::tCurrentContext;
     if (context)
     {
-        context->WaitFor(event);
+        context->WaitFor(event, waitMode);
     }
     else
     {

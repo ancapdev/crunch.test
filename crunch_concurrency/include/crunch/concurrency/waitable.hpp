@@ -5,6 +5,7 @@
 #define CRUNCH_CONCURRENCY_WAITABLE_HPP
 
 #include "crunch/base/override.hpp"
+#include "crunch/base/stdint.hpp"
 
 #include <utility>
 
@@ -80,17 +81,35 @@ struct IWaitable
     virtual ~IWaitable() { }
 };
 
-
-enum WaitMode
+struct WaitMode
 {
-    WAIT_MODE_POLL,
-    WAIT_MODE_YIELD_PREEMTIVE,
-    WAIT_MODE_YIELD_COOPERATIVE
+    WaitMode(uint32 spinCount, bool runCooperative)
+        : spinCount(spinCount)
+        , runCooperative(runCooperative)
+    {}
+
+    static WaitMode Poll()
+    {
+        return WaitMode(0xfffffffful, false);
+    }
+
+    static WaitMode Block(uint32 spinCount = 0)
+    {
+        return WaitMode(spinCount, false);
+    }
+
+    static WaitMode Run(uint32 spinCount = 0)
+    {
+        return WaitMode(spinCount, true);
+    }
+
+    uint32 spinCount;
+    bool runCooperative;
 };
 
-void WaitFor(IWaitable& waitable, WaitMode waitMode = WAIT_MODE_YIELD_COOPERATIVE);
-void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode = WAIT_MODE_YIELD_COOPERATIVE);
-void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WAIT_MODE_YIELD_COOPERATIVE);
+void WaitFor(IWaitable& waitable, WaitMode waitMode = WaitMode::Run());
+void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
+void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
 
 }}
 
