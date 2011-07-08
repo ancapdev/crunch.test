@@ -9,6 +9,7 @@
 
 #if defined (CRUNCH_PLATFORM_WIN32)
 #   include "crunch/base/platform/win32/wintypes.hpp"
+#   include "crunch/concurrency/atomic.hpp"
 #elif defined (CRUNCH_PLATFORM_LINUX)
 #   include <semaphore.h>
 #else
@@ -28,6 +29,7 @@ public:
 
 private:
 #if defined (CRUNCH_PLATFORM_WIN32)
+    Atomic<int32> mCount;
     HANDLE mSemaphore;
 #else
     sem_t mSemaphore;

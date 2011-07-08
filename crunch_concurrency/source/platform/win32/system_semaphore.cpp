@@ -11,7 +11,8 @@
 namespace Crunch { namespace Concurrency { namespace Detail {
 
 SystemSemaphore::SystemSemaphore(uint32 initialCount)
-    : mSemaphore(::CreateSemaphore(NULL, static_cast<LONG>(initialCount), std::numeric_limits<LONG>::max(), NULL))
+    : mCount(static_cast<int32>(initialCount))
+    , mSemaphore(::CreateSemaphore(NULL, static_cast<LONG>(initialCount), std::numeric_limits<LONG>::max(), NULL))
 {}
 
 SystemSemaphore::~SystemSemaphore()
@@ -21,11 +22,13 @@ SystemSemaphore::~SystemSemaphore()
 
 void SystemSemaphore::Post()
 {
-    CRUNCH_ASSERT_ALWAYS(::ReleaseSemaphore(mSemaphore, 1, NULL) == TRUE);
+    if (mCount.Increment() < 0)
+        CRUNCH_ASSERT_ALWAYS(::ReleaseSemaphore(mSemaphore, 1, NULL) == TRUE);
 }
 void SystemSemaphore::Wait()
 {
-    CRUNCH_ASSERT_ALWAYS(::WaitForSingleObject(mSemaphore, INFINITE) == WAIT_OBJECT_0);
+    if (mCount.Decrement() <= 0)
+        CRUNCH_ASSERT_ALWAYS(::WaitForSingleObject(mSemaphore, INFINITE) == WAIT_OBJECT_0);
 }
 
 }}}
