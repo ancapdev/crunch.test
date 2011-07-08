@@ -25,10 +25,24 @@ void SystemSemaphore::Post()
     if (mCount.Increment() < 0)
         CRUNCH_ASSERT_ALWAYS(::ReleaseSemaphore(mSemaphore, 1, NULL) == TRUE);
 }
+
 void SystemSemaphore::Wait()
 {
     if (mCount.Decrement() <= 0)
         CRUNCH_ASSERT_ALWAYS(::WaitForSingleObject(mSemaphore, INFINITE) == WAIT_OBJECT_0);
+}
+
+bool SystemSemaphore::TryWait()
+{
+    int32 count = mCount.Load(MEMORY_ORDER_RELAXED);
+    for (;;)
+    {
+        if (count <= 0)
+            return false;
+
+        if (mCount.CompareAndSwap(count - 1, count))
+            return true;
+    }
 }
 
 }}}

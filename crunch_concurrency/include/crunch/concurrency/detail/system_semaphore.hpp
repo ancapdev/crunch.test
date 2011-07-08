@@ -6,6 +6,7 @@
 
 #include "crunch/base/platform.hpp"
 #include "crunch/base/stdint.hpp"
+#include "crunch/concurrency/yield.hpp"
 
 #if defined (CRUNCH_PLATFORM_WIN32)
 #   include "crunch/base/platform/win32/wintypes.hpp"
@@ -26,6 +27,8 @@ public:
 
     void Post();
     void Wait();
+    bool TryWait();
+    void SpinWait(uint32 spinCount);
 
 private:
 #if defined (CRUNCH_PLATFORM_WIN32)
@@ -35,6 +38,19 @@ private:
     sem_t mSemaphore;
 #endif
 };
+
+inline void SystemSemaphore::SpinWait(uint32 spinCount)
+{
+    while (spinCount--)
+    {
+        if (TryWait())
+            return;
+
+        CRUNCH_PAUSE();
+    }
+
+    Wait();
+}
 
 }}}
 

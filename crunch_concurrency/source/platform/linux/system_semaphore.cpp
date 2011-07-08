@@ -26,4 +26,9 @@ void SystemSemaphore::Wait()
     CRUNCH_ASSERT_ALWAYS(sem_wait(&mSemaphore) == 0);
 }
 
+bool SystemSemaphore::TryWait()
+{
+    return sem_trywait(&mSemaphore) == 0;
+}
+
 }}}
