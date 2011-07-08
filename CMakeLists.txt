@@ -50,6 +50,7 @@ else()
     # Enable cmpxchg16
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcx16")
   endif()
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lrt")
 endif()
 
 #
