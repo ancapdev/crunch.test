@@ -95,10 +95,17 @@ include_directories(${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_TEST_ALTERNATIVE_INIT_API)
 
 macro(crunch_add_test _name)
-  add_custom_target("test-${_name}"
+  add_custom_target("run-${_name}"
     ALL
     ${_name} "--log_level=message"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    VERBATIM)
+endmacro()
+
+macro(crunch_add_benchmark _name)
+  add_custom_target("run-${_name}"
+    ${_name} "--log_level=message"
+    WORKING_DIRECTORY ${CMAKE_CURRENTY_BINARY_DIR}
     VERBATIM)
 endmacro()
 
