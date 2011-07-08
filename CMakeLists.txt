@@ -16,6 +16,23 @@ if(MSVC)
   # Set warning level to highest
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 
+  # Disable buffer security checks
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GS-")
+  
+  # Enable reasonable inlining in Release With Debug Info
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Ob2")
+  
+  # Enable intrinsics
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Oi")
+  
+  # Enable floating point optimizations (for all configurations)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast") 
+  
+  # Link time code gen
+  # No way to set library linker flags at the moment. Disabling for now.
+  # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GL")
+  # set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
+  
   # Disable some warnings
   # warning C4480: nonstandard extension used: specifying underlying type for enum 'Crunch::CpuidFunction'
   # warning C4481: nonstandard extension used: override specifier 'override'
@@ -65,7 +82,7 @@ if(WIN32)
     set(BOOST_LIBRARYDIR "${_root}/lib32")
   endif()
 endif()
-find_package(Boost)
+find_package(Boost COMPONENTS thread date_time)
 if(NOT Boost_FOUND)
   message(FATAL_ERROR "boost not found")
 endif()
