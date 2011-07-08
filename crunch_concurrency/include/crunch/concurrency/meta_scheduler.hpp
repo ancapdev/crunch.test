@@ -52,6 +52,8 @@ public:
 
     MetaThreadHandle CreateMetaThread(MetaThreadConfig const& config);
 
+    void Join();
+    void Leave();
     void Run(IWaitable& until);
 
 private:

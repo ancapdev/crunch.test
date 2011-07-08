@@ -8,34 +8,70 @@
 #include "crunch/base/override.hpp"
 #include "crunch/base/stack_alloc.hpp"
 #include "crunch/concurrency/event.hpp"
+#include "crunch/concurrency/yield.hpp"
+#include "crunch/concurrency/detail/system_semaphore.hpp"
 
 #include <algorithm>
 
 namespace Crunch { namespace Concurrency {
 
-class MetaScheduler::Context : NonCopyable
+class MetaScheduler::Context : NonCopyable, Waiter
 {
 public:
     Context(MetaScheduler& owner)
         : mOwner(owner)
-        , mEvent(false)
+        , mWaitSemaphore(0)
+        , mWaitSpinCount(400)
+        , mWaitState(WAIT_STATE_SPINNING)
     {}
+
+    static int const WAIT_STATE_SPINNING = 0;
+    static int const WAIT_STATE_WAITING = 1;
+    static int const WAIT_STATE_DONE = 2;
+
+    void Notify() CRUNCH_OVERRIDE
+    {
+        int s = WAIT_STATE_SPINNING;
+
+        // Try to unblock from spinning
+        if (mWaitState.CompareAndSwap(WAIT_STATE_DONE, s))
+            return;
+
+        // Must be waiting
+        CRUNCH_ASSERT(s == WAIT_STATE_WAITING);
+        mWaitSemaphore.Post();
+    }
 
     void WaitFor(IWaitable& waitable)
     {
         // TODO: Let active scheduler handle the wait if it can
         // TODO: Keep in mind if active scheduler is a fiber scheduler we might come back on a different system thread.. (and this thread might be used for other things.. i.e. waiter must be stack local)
 
-        auto waiter = MakeWaiter([&] { mEvent.Set(); });
+        mWaitState.Store(WAIT_STATE_SPINNING, MEMORY_ORDER_RELAXED);
 
-        mEvent.Reset();
-        waitable.AddWaiter(&waiter);
-        mEvent.Wait();
+        waitable.AddWaiter(this);
+
+        uint32 spinLeft = mWaitSpinCount;
+        while (spinLeft--)
+        {
+            if (mWaitState.Load(MEMORY_ORDER_RELAXED) == WAIT_STATE_DONE)
+                return;
+
+            CRUNCH_PAUSE();
+        }
+
+        int s = WAIT_STATE_SPINNING;
+        if (!mWaitState.CompareAndSwap(WAIT_STATE_WAITING, s))
+            return; // Must have completed
+
+        mWaitSemaphore.Wait();
     }
 
 private:
     MetaScheduler& mOwner;
-    Detail::SystemEvent mEvent;
+    Detail::SystemSemaphore mWaitSemaphore;
+    uint32 mWaitSpinCount;
+    Atomic<int> mWaitState;
 };
 
 CRUNCH_THREAD_LOCAL MetaScheduler::Context* MetaScheduler::tCurrentContext = NULL;
@@ -78,6 +114,19 @@ MetaScheduler::MetaThreadHandle MetaScheduler::CreateMetaThread(MetaThreadConfig
     MetaThreadPtr mt(new MetaThread(config));
     mIdleMetaThreads.push_back(std::move(mt));
     return MetaThreadHandle();
+}
+
+void MetaScheduler::Join()
+{
+    CRUNCH_ASSERT_ALWAYS(tCurrentContext == nullptr);
+    tCurrentContext = new Context(*this);
+}
+
+void MetaScheduler::Leave()
+{
+    CRUNCH_ASSERT_ALWAYS(tCurrentContext != nullptr);
+    delete tCurrentContext;
+    tCurrentContext = nullptr;
 }
 
 void MetaScheduler::Run(IWaitable& until)
