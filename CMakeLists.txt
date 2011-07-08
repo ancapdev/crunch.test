@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 2.8)
 #
 if(MSVC)
   add_definitions("-D_WIN32_WINNT=0x0501")
+  add_definitions("-DNOMINMAX")
   add_definitions("-Dnoexcept=throw()")
 
   # Enable parallel compilation
