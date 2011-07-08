@@ -33,6 +33,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/detail/system_condition.hpp
   include/crunch/concurrency/detail/system_event.hpp
   include/crunch/concurrency/detail/system_mutex.hpp
+  include/crunch/concurrency/detail/system_semaphore.hpp
   source/event.cpp
   source/exceptions.cpp
   source/future_data.cpp
@@ -48,6 +49,7 @@ add_library(crunch_concurrency_lib
   source/platform/${PLATFORM_NAME}/system_condition.cpp
   source/platform/${PLATFORM_NAME}/system_event.cpp
   source/platform/${PLATFORM_NAME}/system_mutex.cpp
+  source/platform/${PLATFORM_NAME}/system_semaphore.cpp
   source/platform/${PLATFORM_NAME}/thread.cpp
   source/platform/${PLATFORM_NAME}/yield.cpp
   ${_platformFiles})
@@ -71,6 +73,7 @@ add_executable(crunch_concurrency_test
   test/thread_tests.cpp)
 
 target_link_libraries(crunch_concurrency_test
-  crunch_concurrency_lib)
+  crunch_concurrency_lib
+  ${Boost_LIBRARIES})
 
 crunch_add_test(crunch_concurrency_test)
