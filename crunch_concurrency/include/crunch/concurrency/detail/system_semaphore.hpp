@@ -10,7 +10,7 @@
 #if defined (CRUNCH_PLATFORM_WIN32)
 #   include "crunch/base/platform/win32/wintypes.hpp"
 #elif defined (CRUNCH_PLATFORM_LINUX)
-#   include <semaphore.hpp>
+#   include <semaphore.h>
 #else
 #   error "Unsupported platform"
 #endif
