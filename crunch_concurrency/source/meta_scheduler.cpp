@@ -22,23 +22,10 @@ public:
         : mOwner(owner)
         , mWaitSemaphore(0)
         , mWaitSpinCount(400)
-        , mWaitState(WAIT_STATE_SPINNING)
     {}
-
-    static int const WAIT_STATE_SPINNING = 0;
-    static int const WAIT_STATE_WAITING = 1;
-    static int const WAIT_STATE_DONE = 2;
 
     void Notify() CRUNCH_OVERRIDE
     {
-        int s = WAIT_STATE_SPINNING;
-
-        // Try to unblock from spinning
-        if (mWaitState.CompareAndSwap(WAIT_STATE_DONE, s))
-            return;
-
-        // Must be waiting
-        CRUNCH_ASSERT(s == WAIT_STATE_WAITING);
         mWaitSemaphore.Post();
     }
 
@@ -46,32 +33,14 @@ public:
     {
         // TODO: Let active scheduler handle the wait if it can
         // TODO: Keep in mind if active scheduler is a fiber scheduler we might come back on a different system thread.. (and this thread might be used for other things.. i.e. waiter must be stack local)
-
-        mWaitState.Store(WAIT_STATE_SPINNING, MEMORY_ORDER_RELAXED);
-
         waitable.AddWaiter(this);
-
-        uint32 spinLeft = mWaitSpinCount;
-        while (spinLeft--)
-        {
-            if (mWaitState.Load(MEMORY_ORDER_RELAXED) == WAIT_STATE_DONE)
-                return;
-
-            CRUNCH_PAUSE();
-        }
-
-        int s = WAIT_STATE_SPINNING;
-        if (!mWaitState.CompareAndSwap(WAIT_STATE_WAITING, s))
-            return; // Must have completed
-
-        mWaitSemaphore.Wait();
+        mWaitSemaphore.SpinWait(mWaitSpinCount);
     }
 
 private:
     MetaScheduler& mOwner;
     Detail::SystemSemaphore mWaitSemaphore;
     uint32 mWaitSpinCount;
-    Atomic<int> mWaitState;
 };
 
 CRUNCH_THREAD_LOCAL MetaScheduler::Context* MetaScheduler::tCurrentContext = NULL;
