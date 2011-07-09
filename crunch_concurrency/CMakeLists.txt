@@ -83,6 +83,7 @@ add_executable(crunch_concurrency_benchmark
    benchmark/meta_scheduler_benchmarks.cpp)
 
 target_link_libraries(crunch_concurrency_benchmark
+  crunch_benchmarking_lib
   crunch_concurrency_lib)
    
 crunch_add_benchmark(crunch_concurrency_benchmark)
