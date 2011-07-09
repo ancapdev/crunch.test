@@ -23,15 +23,15 @@ void StatisticalProfiler::Reset()
 {
     mSamples.clear();
     mLastCalculationSize = 0;
+    mRawMin = 0.0;
+    mRawMax = 0.0;
+    mRawMean = 0.0;
+    mRawStdDev = 0.0;
     mMin = 0.0;
     mMax = 0.0;
     mMean = 0.0;
     mMedian = 0.0;
     mStdDev = 0.0;
-    mFilteredMin = 0.0;
-    mFilteredMax = 0.0;
-    mFilteredMean = 0.0;
-    mFilteredStdDev = 0.0;
 }
 
 bool StatisticalProfiler::IsDone() const
@@ -45,7 +45,7 @@ bool StatisticalProfiler::IsDone() const
     if (mSamples.size() < mMinSamples)
         return false;
 
-    return mFilteredStdDev <= mTargetStdDev * mFilteredMean;
+    return mStdDev <= mTargetStdDev * mMean;
 }
 
 double StatisticalProfiler::GetMin() const
@@ -78,28 +78,28 @@ double StatisticalProfiler::GetStdDev() const
     return mStdDev;
 }
 
-double StatisticalProfiler::GetFilteredMin() const
+double StatisticalProfiler::GetRawMin() const
 {
     UpdateStatistics();
-    return mFilteredMin;
+    return mRawMin;
 }
 
-double StatisticalProfiler::GetFilteredMax() const
+double StatisticalProfiler::GetRawMax() const
 {
     UpdateStatistics();
-    return mFilteredMax;
+    return mRawMax;
 }
 
-double StatisticalProfiler::GetFilteredMean() const
+double StatisticalProfiler::GetRawMean() const
 {
     UpdateStatistics();
-    return mFilteredMean;
+    return mRawMean;
 }
 
-double StatisticalProfiler::GetFilteredStdDev() const
+double StatisticalProfiler::GetRawStdDev() const
 {
     UpdateStatistics();
-    return mFilteredStdDev;
+    return mRawStdDev;
 }
 
 void StatisticalProfiler::UpdateStatistics() const
@@ -111,23 +111,23 @@ void StatisticalProfiler::UpdateStatistics() const
 
     std::sort(mSamples.begin(), mSamples.end());
 
-    mMin = mSamples[0];
-    mMax = mSamples[mSamples.size() - 1];
-    mMean = std::accumulate(mSamples.begin(), mSamples.end(), 0.0) / static_cast<double>(mSamples.size());
+    mRawMin = mSamples[0];
+    mRawMax = mSamples[mSamples.size() - 1];
+    mRawMean = std::accumulate(mSamples.begin(), mSamples.end(), 0.0) / static_cast<double>(mSamples.size());
+    mRawStdDev = std::accumulate(mSamples.begin(), mSamples.end(), 0.0, [&] (double acc, double x) { return acc + (x-mMean)*(x-mMean); }) / static_cast<double>(mSamples.size());
+
+    std::size_t const q1 = mSamples.size() / 4;
+    std::size_t const q3 = mSamples.size() - q1;
+
+    mMin = mSamples[q1];
+    mMax = mSamples[q3 - 1];
+    mMean = std::accumulate(mSamples.begin() + q1, mSamples.begin() + q3, 0.0) / static_cast<double>(q3 - q1);
+    mStdDev = std::accumulate(mSamples.begin() + q1, mSamples.begin() + q3, 0.0, [&] (double acc, double x) { return acc + (x-mMean)*(x-mMean); }) / static_cast<double>(q3 - q1);
     if ((mSamples.size() % 2) == 0)
         mMedian = (mSamples[mSamples.size() / 2] + mSamples[(mSamples.size() + 1) / 2]) / 2.0;
     else
         mMedian = mSamples[mSamples.size() / 2];
 
-    mStdDev = std::accumulate(mSamples.begin(), mSamples.end(), 0.0, [&] (double acc, double x) { return acc + (x-mMean)*(x-mMean); }) / static_cast<double>(mSamples.size());
-
-    std::size_t const q1 = mSamples.size() / 4;
-    std::size_t const q3 = mSamples.size() - q1;
-
-    mFilteredMin = mSamples[q1];
-    mFilteredMax = mSamples[q3 - 1];
-    mFilteredMean = std::accumulate(mSamples.begin() + q1, mSamples.begin() + q3, 0.0) / static_cast<double>(q3 - q1);
-    mFilteredStdDev = std::accumulate(mSamples.begin() + q1, mSamples.begin() + q3, 0.0, [&] (double acc, double x) { return acc + (x-mFilteredMean)*(x-mFilteredMean); }) / static_cast<double>(q3 - q1);
 }
 
 }}
