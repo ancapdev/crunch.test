@@ -13,13 +13,13 @@ class Stopwatch
 public:
     Stopwatch();
 
-    void Stopwatch::Start();
-    void Stopwatch::Stop();
+    void Start();
+    void Stop();
 
-    double Stopwatch::GetElapsedSeconds() const;
-    double Stopwatch::GetElapsedMilliseconds() const;
-    double Stopwatch::GetElapsedMicroseconds() const;
-    double Stopwatch::GetElapsedNanoseconds() const;
+    double GetElapsedSeconds() const;
+    double GetElapsedMilliseconds() const;
+    double GetElapsedMicroseconds() const;
+    double GetElapsedNanoseconds() const;
 
 private:
     HighFrequencyTimer mTimer;
