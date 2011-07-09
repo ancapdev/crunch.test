@@ -42,6 +42,18 @@ inline Waiter* RemoveWaiterFromList(Waiter* head, Waiter* waiter)
     return head;
 }
 
+inline void NotifyAllWaiters(Waiter* head)
+{
+    Waiter* current = head;
+    while (current != nullptr)
+    {
+        // current may be invalid after Notify, so cache next before calling
+        Waiter* next = current->next;
+        current->Notify();
+        current = next;
+    }
+}
+
 template<typename F>
 struct GenericWaiter : Waiter
 {
