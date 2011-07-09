@@ -9,7 +9,6 @@
 #include "crunch/concurrency/scheduler.hpp"
 #include "crunch/concurrency/thread_local.hpp"
 #include "crunch/concurrency/waitable.hpp"
-#include "crunch/concurrency/detail/system_event.hpp"
 #include "crunch/concurrency/detail/system_mutex.hpp"
 
 #include <memory>
@@ -21,6 +20,7 @@ namespace Crunch { namespace Concurrency {
 // - task scheduler
 // - io_service scheduler
 // - fiber / coroutine scheduler
+// TODO: Add suppor for threads that haven't joined the scheduler to call WaitForXXX
 class MetaScheduler
 {
 public:
@@ -59,7 +59,7 @@ public:
 private:
     friend void WaitFor(IWaitable&, WaitMode);
     friend void WaitForAll(IWaitable**, std::size_t, WaitMode);
-    friend void WaitForAny(IWaitable**, std::size_t, WaitMode);
+    friend std::vector<IWaitable*> WaitForAny(IWaitable**, std::size_t, WaitMode);
 
     class MetaThread;
     typedef std::unique_ptr<MetaThread> MetaThreadPtr;
@@ -79,10 +79,6 @@ private:
     Detail::SystemMutex mContextsLock;
 
     static CRUNCH_THREAD_LOCAL Context* tCurrentContext;
-
-    // For use in threads that haven't joined the scheduler
-    static Detail::SystemMutex sSharedEventLock;
-    static Detail::SystemEvent sSharedEvent;
 };
 
 }}

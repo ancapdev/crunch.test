@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(SingleThreadedWaitForReadyWaitableBenchmark)
     struct NullWaitable : IWaitable
     {
         virtual void AddWaiter(Waiter* waiter) { waiter->Notify(); }
-        virtual void RemoveWaiter(Waiter*) {}
+        virtual bool RemoveWaiter(Waiter*) { return false; }
         virtual bool IsOrderDependent() const { return false; }
     };
 

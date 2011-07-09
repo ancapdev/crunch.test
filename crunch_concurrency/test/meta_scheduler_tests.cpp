@@ -15,9 +15,13 @@ BOOST_AUTO_TEST_CASE(WaitTest)
     struct NullWaitable : IWaitable
     {
         virtual void AddWaiter(Waiter* waiter) { waiter->Notify(); }
-        virtual void RemoveWaiter(Waiter*) {}
+        virtual bool RemoveWaiter(Waiter*) { return false; }
         virtual bool IsOrderDependent() const { return false; }
     };
+
+    MetaScheduler::SchedulerList schedulers;
+    MetaScheduler ms(schedulers);
+    ms.Join();
 
     NullWaitable nullWaitable;
     IWaitable* waitables[] = { &nullWaitable };
@@ -25,7 +29,10 @@ BOOST_AUTO_TEST_CASE(WaitTest)
     WaitFor(nullWaitable, WaitMode::Block());
     WaitForAll(waitables, 1, WaitMode::Block());
     WaitForAny(waitables, 1, WaitMode::Block());
+
+    ms.Leave();
 }
+
 
 BOOST_AUTO_TEST_SUITE_END()
 

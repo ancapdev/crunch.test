@@ -89,7 +89,7 @@ void Mutex::AddWaiter(Waiter* waiter)
     }
 }
 
-void Mutex::RemoveWaiter(Waiter* waiter)
+bool Mutex::RemoveWaiter(Waiter* waiter)
 {
     CRUNCH_ASSERT((reinterpret_cast<std::size_t>(waiter) & FLAG_BITS) == 0);
 
@@ -106,7 +106,7 @@ void Mutex::RemoveWaiter(Waiter* waiter)
         {
             head = RemoveWaiterFromList(head, waiter);
             mWaiters.Store(head, MEMORY_ORDER_RELEASE);
-            return;
+            return true;
         }
 
         backoff.Pause();

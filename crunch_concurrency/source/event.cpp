@@ -46,7 +46,7 @@ void Event::AddWaiter(Waiter* waiter)
     }
 }
 
-void Event::RemoveWaiter(Waiter* waiter)
+bool Event::RemoveWaiter(Waiter* waiter)
 {
     CRUNCH_ASSERT((reinterpret_cast<std::size_t>(waiter) & FLAG_BITS) == 0);
 
@@ -64,7 +64,7 @@ void Event::RemoveWaiter(Waiter* waiter)
         {
             head = RemoveWaiterFromList(head, waiter);
             mWaiters.Store(head, MEMORY_ORDER_RELEASE);
-            return;
+            return true;
         }
 
         backoff.Pause();

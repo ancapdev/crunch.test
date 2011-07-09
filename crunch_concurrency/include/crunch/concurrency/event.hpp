@@ -24,7 +24,7 @@ public:
     bool IsSet() const;
 
     virtual void AddWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
-    virtual void RemoveWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
+    virtual bool RemoveWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
     virtual bool IsOrderDependent() const CRUNCH_OVERRIDE;
 
 private:

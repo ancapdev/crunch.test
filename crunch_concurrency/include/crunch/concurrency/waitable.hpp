@@ -8,6 +8,7 @@
 #include "crunch/base/stdint.hpp"
 
 #include <utility>
+#include <vector>
 
 namespace Crunch { namespace Concurrency {
 
@@ -73,8 +74,7 @@ struct IWaitable
 {
     virtual void AddWaiter(Waiter* waiter) = 0;
 
-    // Must not return until any callbacks on waiter has completed
-    virtual void RemoveWaiter(Waiter* waiter) = 0;
+    virtual bool RemoveWaiter(Waiter* waiter) = 0;
 
     virtual bool IsOrderDependent() const = 0;
 
@@ -109,7 +109,9 @@ struct WaitMode
 
 void WaitFor(IWaitable& waitable, WaitMode waitMode = WaitMode::Run());
 void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
-void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
+
+///\ return List of signaled waitables
+std::vector<IWaitable*> WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
 
 }}
 

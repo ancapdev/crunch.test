@@ -64,9 +64,9 @@ public:
         mData->AddWaiter(waiter);
     }
 
-    virtual void RemoveWaiter(Waiter* waiter) CRUNCH_OVERRIDE
+    virtual bool RemoveWaiter(Waiter* waiter) CRUNCH_OVERRIDE
     {
-        mData->RemoveWaiter(waiter);
+        return mData->RemoveWaiter(waiter);
     }
 
     virtual bool IsOrderDependent() const CRUNCH_OVERRIDE

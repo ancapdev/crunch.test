@@ -15,7 +15,7 @@
 
 namespace Crunch { namespace Concurrency {
 
-class MetaScheduler::Context : NonCopyable, Waiter
+class MetaScheduler::Context : NonCopyable
 {
 public:
     Context(MetaScheduler& owner)
@@ -23,27 +23,102 @@ public:
         , mWaitSemaphore(0)
     {}
 
-    void Notify() CRUNCH_OVERRIDE
-    {
-        mWaitSemaphore.Post();
-    }
-
     void WaitFor(IWaitable& waitable, WaitMode waitMode)
     {
         // TODO: Let active scheduler handle the wait if it can
         // TODO: Keep in mind if active scheduler is a fiber scheduler we might come back on a different system thread.. (and this thread might be used for other things.. i.e. waiter must be stack local)
-        waitable.AddWaiter(this);
+        
+        PostWaiter waiter(mWaitSemaphore);
+        waitable.AddWaiter(&waiter);
         mWaitSemaphore.SpinWait(waitMode.spinCount);
     }
 
+    void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
+    {
+        IWaitable** unordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
+        IWaitable** ordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
+        std::size_t orderedCount = 0;
+        std::size_t unorderedCount = 0;
+
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            if (waitables[i]->IsOrderDependent())
+                ordered[orderedCount++] = waitables[i];
+            else
+                unordered[unorderedCount++] = waitables[i];
+        }
+
+        if (orderedCount != 0)
+        {
+            std::sort(ordered, ordered + orderedCount);
+
+            // Order dependent doesn't imply fair, so we need to wait for one at a time
+            for (std::size_t i = 0; i < orderedCount; ++i)
+                WaitFor(*ordered[i], waitMode);
+        }
+
+        if (unorderedCount != 0)
+        {
+            PostWaiter* waiters = CRUNCH_STACK_ALLOC_T(PostWaiter, count);
+
+            for (std::size_t i = 0; i < unorderedCount; ++i)
+            {
+                ::new (&waiters[i]) PostWaiter(mWaitSemaphore);
+                waitables[i]->AddWaiter(&waiters[i]);
+            }
+
+            for (std::size_t i = 0; i < unorderedCount; ++i)
+                mWaitSemaphore.SpinWait(waitMode.spinCount);
+        }
+    }
+
+    std::vector<IWaitable*> WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
+    {
+        PostWaiter* waiters = CRUNCH_STACK_ALLOC_T(PostWaiter, count);
+
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            ::new (&waiters[i]) PostWaiter(mWaitSemaphore);
+            waitables[i]->AddWaiter(&waiters[i]);
+        }
+
+        mWaitSemaphore.SpinWait(waitMode.spinCount);
+
+        std::vector<IWaitable*> signaled;
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            if (!waitables[i]->RemoveWaiter(&waiters[i]))
+                signaled.push_back(waitables[i]);
+        }
+
+        // Wait for any waiters that weren't removed. They should be in-flight Notify()
+        CRUNCH_ASSERT(signaled.size() >= 1);
+        for (std::size_t i = 1; i < signaled.size(); ++i)
+            mWaitSemaphore.SpinWait(waitMode.spinCount);
+
+        return signaled;
+    }
+
 private:
+    struct PostWaiter : Waiter, NonCopyable
+    {
+        PostWaiter(Detail::SystemSemaphore& semaphore)
+            : semaphore(semaphore)
+        {}
+
+        virtual void Notify() CRUNCH_OVERRIDE
+        {
+            semaphore.Post();
+        }
+
+        Detail::SystemSemaphore& semaphore;
+    };
+
     MetaScheduler& mOwner;
     Detail::SystemSemaphore mWaitSemaphore;
 };
 
 CRUNCH_THREAD_LOCAL MetaScheduler::Context* MetaScheduler::tCurrentContext = NULL;
-Detail::SystemMutex MetaScheduler::sSharedEventLock;
-Detail::SystemEvent MetaScheduler::sSharedEvent;
 
 struct ContextRunState : Waiter
 {
@@ -131,114 +206,22 @@ void MetaScheduler::Run(IWaitable& until)
 void WaitFor(IWaitable& waitable, WaitMode waitMode)
 {
     MetaScheduler::Context* context = MetaScheduler::tCurrentContext;
-
-    if (context)
-        context->WaitFor(waitable, waitMode);
-    else
-    {
-        auto waiter = MakeWaiter([&] { MetaScheduler::sSharedEvent.Set(); });
-        Detail::SystemMutex::ScopedLock lock(MetaScheduler::sSharedEventLock);
-     
-        MetaScheduler::sSharedEvent.Reset();
-        waitable.AddWaiter(&waiter);
-        MetaScheduler::sSharedEvent.Wait();
-    }
+    CRUNCH_ASSERT_MSG_ALWAYS(context != nullptr, "Thread not joined to MetaScheduler");
+    context->WaitFor(waitable, waitMode);
 }
 
 void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
 {
-    IWaitable** unordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
-    IWaitable** ordered = CRUNCH_STACK_ALLOC_T(IWaitable*, count);
-    std::size_t orderedCount = 0;
-    std::size_t unorderedCount = 0;
-
-    for (std::size_t i = 0; i < count; ++i)
-    {
-        if (waitables[i]->IsOrderDependent())
-            ordered[orderedCount++] = waitables[i];
-        else
-            unordered[unorderedCount++] = waitables[i];
-    }
-
-    if (orderedCount != 0)
-        std::sort(ordered, ordered + orderedCount);
-
     MetaScheduler::Context* context = MetaScheduler::tCurrentContext;
-
-    if (context)
-    {
-        // Order dependent doesn't imply fair, so we need to wait for one at a time
-        for (std::size_t i = 0; i < orderedCount; ++i)
-            context->WaitFor(*ordered[i], waitMode);
-
-        // TODO: could add all waiters in one go and do only one wait
-        for (std::size_t i = 0; i < unorderedCount; ++i)
-            context->WaitFor(*unordered[i], waitMode);
-    }
-    else
-    {
-        auto waiter = MakeWaiter([&] { MetaScheduler::sSharedEvent.Set(); });
-        auto waitHelper = [&] (IWaitable& waitable) {
-            MetaScheduler::sSharedEvent.Reset();
-            waitable.AddWaiter(&waiter);
-            MetaScheduler::sSharedEvent.Wait();
-        };
-            
-        Detail::SystemMutex::ScopedLock lock(MetaScheduler::sSharedEventLock);
-
-        for (std::size_t i = 0; i < orderedCount; ++i)
-            waitHelper(*ordered[i]);
-
-        for (std::size_t i = 0; i < unorderedCount; ++i)
-            waitHelper(*unordered[i]);
-    }
+    CRUNCH_ASSERT_MSG_ALWAYS(context != nullptr, "Thread not joined to MetaScheduler");
+    context->WaitForAll(waitables, count, waitMode);
 }
 
-void WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
+std::vector<IWaitable*> WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
 {
-    struct WaiterHelper : Waiter, NonCopyable
-    {
-        WaiterHelper(Event& event)
-            : event(event)
-        {}
-
-        virtual void Notify() CRUNCH_OVERRIDE
-        {
-            event.Set();
-        }
-
-        Event& event;
-    };
-
-    WaiterHelper* waiters = CRUNCH_STACK_ALLOC_T(WaiterHelper, count);
-
-    Event event(false);
-
-    for (std::size_t i = 0; i < count; ++i)
-    {
-        ::new (&waiters[i]) WaiterHelper(event);
-        waitables[i]->AddWaiter(&waiters[i]);
-    }
-
     MetaScheduler::Context* context = MetaScheduler::tCurrentContext;
-    if (context)
-    {
-        context->WaitFor(event, waitMode);
-    }
-    else
-    {
-        auto waiter = MakeWaiter([&] { MetaScheduler::sSharedEvent.Set(); });
-
-        Detail::SystemMutex::ScopedLock lock(MetaScheduler::sSharedEventLock);
-        MetaScheduler::sSharedEvent.Reset();
-        event.AddWaiter(&waiter);
-        MetaScheduler::sSharedEvent.Wait();
-    }
-
-    for (std::size_t i = 0; i < count; ++i)
-    {
-        waitables[i]->RemoveWaiter(&waiters[i]);
-    }
+    CRUNCH_ASSERT_MSG_ALWAYS(context != nullptr, "Thread not joined to MetaScheduler");
+    return context->WaitForAny(waitables, count, waitMode);
 }
 
 }}
