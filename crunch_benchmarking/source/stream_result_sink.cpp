@@ -19,7 +19,8 @@ StreamResultSink::StreamResultSink(std::ostream& stream, bool showProgress)
 void StreamResultSink::BeginTable(Benchmarking::ResultTableDescriptor const& descriptor)
 {
     mCurrentDescriptor.reset(new ResultTableDescriptor(descriptor));
-    mStream << descriptor.GetName() << " v" << descriptor.GetVersion();
+    mStream << std::endl;
+    mStream << "  " << descriptor.GetName() << " v" << descriptor.GetVersion();
     if (mShowProgress)
         mStream << ": Running..";
 }
@@ -40,28 +41,38 @@ void StreamResultSink::EndTable()
 
     if (mShowProgress)
         mStream << "done!";
-
     mStream << std::endl;
+
+    auto const addSeparator = [&] {
+        mStream << "+";
+        mStream << std::setfill('-');
+        for (std::size_t i = 0; i < numColumns; ++i)
+            mStream << std::setw(columnWidths[i] + 3) << "+";
+        mStream << std::endl;
+        mStream << std::setfill(' ');
+    };
+
+    addSeparator();
+    
     mStream << "| ";
     mStream << std::left;
     for (std::size_t i = 0; i < numColumns; ++i)
         mStream << std::setw(columnWidths[i]) << mCurrentDescriptor->GetColumnName(i) << " | ";
     mStream << std::endl;
+    mStream << std::right;
 
-    mStream << "+";
-    mStream << std::setfill('-') << std::right;
-    for (std::size_t i = 0; i < numColumns; ++i)
-        mStream << std::setw(columnWidths[i] + 3) << "+";
-    mStream << std::endl;
+    addSeparator();
 
-    mStream << std::setfill(' ');
     std::for_each(mRows.begin(), mRows.end(), [&] (Row const& r) {
         mStream << "| ";
         for (std::size_t i = 0; i < numColumns; ++i)
             mStream << std::setw(columnWidths[i]) << r[i] << " | ";
         mStream << std::endl;
     });
-    
+
+    addSeparator();
+    mStream << std::endl;
+
     mRows.clear();
     mCurrentDescriptor.reset();
 }
