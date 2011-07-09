@@ -98,6 +98,24 @@ namespace Detail
         AtomicStore(dst, src);
         CRUNCH_MEMORY_FENCE();
     }
+
+#if defined (CRUNCH_ARCH_X86_32)
+    template<typename Op>
+    inline __int64 FallbackAtomicOp(__int64 volatile& value, Op op)
+    {
+        __int64 oldValue = value;
+        for (;;)
+        {
+            __int64 const newValue = op(oldValue);
+            __int64 currentValue = _InterlockedCompareExchange64(&value, newValue, oldValue);
+            if (currentValue == oldValue)
+                return oldValue;
+
+            _mm_pause();
+            oldValue = currentValue;
+        }
+    }
+#endif
 }
 
 
@@ -198,13 +216,16 @@ inline long AtomicIncrement(long volatile& addend, MemoryOrder = MEMORY_ORDER_SE
     return _InterlockedIncrement(&addend) - 1;
 }
 
-#if defined (CRUNCH_ARCH_X86_64)
+
 inline __int64 AtomicIncrement(__int64 volatile& addend, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&addend, 8);
+#if defined (CRUNCH_ARCH_X86_64)
     return _InterlockedIncrement64(&addend) - 1;
-}
+#else
+    return Detail::FallbackAtomicOp(addend, [] (__int64 x) { return x + 1; });
 #endif
+}
 
 inline short AtomicDecrement(short volatile& addend, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
@@ -218,13 +239,16 @@ inline long AtomicDecrement(long volatile& addend, MemoryOrder = MEMORY_ORDER_SE
     return _InterlockedDecrement(&addend) + 1;
 }
 
-#if defined (CRUNCH_ARCH_X86_64)
+
 inline __int64 AtomicDecrement(__int64 volatile& addend, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&addend, 8);
+#if defined (CRUNCH_ARCH_X86_64)
     return _InterlockedDecrement64(&addend) + 1;
-}
+#else
+    return Detail::FallbackAtomicOp(addend, [] (__int64 x) { return x - 1; });
 #endif
+}
 
 inline long AtomicAdd(long volatile& addend, long value, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
@@ -232,13 +256,15 @@ inline long AtomicAdd(long volatile& addend, long value, MemoryOrder = MEMORY_OR
     return _InterlockedExchangeAdd(&addend, value);
 }
 
-#if defined (CRUNCH_ARCH_X86_64)
 inline __int64 AtomicAdd(__int64 volatile& addend, __int64 value, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&addend, 8);
+#if defined (CRUNCH_ARCH_X86_64)
     return _InterlockedExchangeAdd64(&addend, value);
-}
+#else
+    return Detail::FallbackAtomicOp(addend, [=] (__int64 x) { return x + value; });
 #endif
+}
 
 inline long AtomicSub(long volatile& addend, long value, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
@@ -246,13 +272,16 @@ inline long AtomicSub(long volatile& addend, long value, MemoryOrder = MEMORY_OR
     return _InterlockedExchangeAdd(&addend, -value);
 }
 
-#if defined (CRUNCH_ARCH_X86_64)
+
 inline __int64 AtomicSub(__int64 volatile& addend, __int64 value, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&addend, 8);
+#if defined (CRUNCH_ARCH_X86_64)
     return _InterlockedExchangeAdd64(&addend, -value);
-}
+#else
+    return Detail::FallbackAtomicOp(addend, [=] (__int64 x) { return x - value; });
 #endif
+}
 
 inline char AtomicAnd(char volatile& value, char mask, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
@@ -271,13 +300,16 @@ inline long AtomicAnd(long volatile& value, long mask, MemoryOrder = MEMORY_ORDE
     return _InterlockedAnd(&value, mask);
 }
 
-#if defined (CRUNCH_ARCH_X86_64)
 inline __int64 AtomicAnd(__int64 volatile& value, __int64 mask, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&value, 8);
+#if defined (CRUNCH_ARCH_X86_64)
     return _InterlockedAnd64(&value, mask);
-}
+#else
+    return Detail::FallbackAtomicOp(value, [=] (__int64 x) { return x & mask; });
 #endif
+}
+
 
 inline char AtomicOr(char volatile& value, char mask, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
@@ -296,13 +328,16 @@ inline long AtomicOr(long volatile& value, long mask, MemoryOrder = MEMORY_ORDER
     return _InterlockedOr(&value, mask);
 }
 
-#if defined (CRUNCH_ARCH_X86_64)
+
 inline __int64 AtomicOr(__int64 volatile& value, __int64 mask, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&value, 8);
+#if defined (CRUNCH_ARCH_X86_64)
     return _InterlockedOr64(&value, mask);
-}
+#else
+    return Detail::FallbackAtomicOp(value, [=] (__int64 x) { return x | mask; });
 #endif
+}
 
 inline char AtomicXor(char volatile& value, char mask, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
@@ -321,13 +356,15 @@ inline long AtomicXor(long volatile& value, long mask, MemoryOrder = MEMORY_ORDE
     return _InterlockedXor(&value, mask);
 }
 
-#if defined (CRUNCH_ARCH_X86_64)
 inline __int64 AtomicXor(__int64 volatile& value, __int64 mask, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&value, 8);
+#if defined (CRUNCH_ARCH_X86_64)
     return _InterlockedXor64(&value, mask);
-}
+#else
+    return Detail::FallbackAtomicOp(value, [=] (__int64 x) { return x ^ mask; });
 #endif
+}
 
 }}}
 
