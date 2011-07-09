@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(WaitTest)
 
     MetaScheduler::SchedulerList schedulers;
     MetaScheduler ms(schedulers);
-    ms.Join();
+    MetaScheduler::Context& context = ms.AcquireContext();
 
     NullWaitable nullWaitable;
     IWaitable* waitables[] = { &nullWaitable };
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(WaitTest)
     WaitForAll(waitables, 1, WaitMode::Block());
     WaitForAny(waitables, 1, WaitMode::Block());
 
-    ms.Leave();
+    context.Release();
 }
 
 

@@ -52,9 +52,18 @@ public:
 
     MetaThreadHandle CreateMetaThread(MetaThreadConfig const& config);
 
-    void Join();
-    void Leave();
-    void Run(IWaitable& until);
+    class Context
+    {
+    public:
+        void WaitFor(IWaitable& waitable, WaitMode waitMode = WaitMode::Run());
+        void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
+        std::vector<IWaitable*> WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
+
+        void Run(IWaitable& until);
+        void Release();
+    };
+
+    Context& AcquireContext();
 
 private:
     friend void WaitFor(IWaitable&, WaitMode);
@@ -65,8 +74,8 @@ private:
     typedef std::unique_ptr<MetaThread> MetaThreadPtr;
     typedef std::vector<MetaThreadPtr> MetaThreadList;
 
-    class Context;
-    typedef std::unique_ptr<Context> ContextPtr;
+    class ContextImpl;
+    typedef std::unique_ptr<ContextImpl> ContextPtr;
     typedef std::vector<ContextPtr> ContextList;
 
     SchedulerList mSchedulers;
@@ -78,7 +87,7 @@ private:
     ContextList mContexts;
     Detail::SystemMutex mContextsLock;
 
-    static CRUNCH_THREAD_LOCAL Context* tCurrentContext;
+    static CRUNCH_THREAD_LOCAL ContextImpl* tCurrentContext;
 };
 
 }}
