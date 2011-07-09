@@ -29,26 +29,22 @@ typedef boost::mpl::list<
 typedef AtomicSwapTypes AtomicAddTypes;
 
 typedef boost::mpl::list<
-#if defined (CRUNCH_ARCH_X86_64)
-    int64,
-    uint64,
-#endif
     int16,
     uint16,
     int32,
-    uint32> AtomicIncrementTypes;
+    uint32,
+    int64,
+    uint64> AtomicIncrementTypes;
 
 typedef boost::mpl::list<
-#if defined (CRUNCH_ARCH_X86_64)
-    int64,
-    uint64,
-#endif
     int8,
     uint8,
     int16,
     uint16,
     int32,
-    uint32> AtomicAndTypes;
+    uint32,
+    int64,
+    uint64> AtomicAndTypes;
 
 typedef AtomicAndTypes AtomicOrTypes;
 typedef AtomicAndTypes AtomicXorTypes;
