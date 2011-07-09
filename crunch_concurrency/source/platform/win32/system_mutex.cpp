@@ -9,7 +9,7 @@ namespace Crunch { namespace Concurrency { namespace Detail {
 
 SystemMutex::SystemMutex()
 {
-    static_assert(sizeof(CriticalSectionStorageType) <= sizeof(CRITICAL_SECTION), "Insufficient storage space for CRITICAL_SECTION");
+    static_assert(sizeof(CriticalSectionStorageType) >= sizeof(CRITICAL_SECTION), "Insufficient storage space for CRITICAL_SECTION");
 
     InitializeCriticalSection(reinterpret_cast<CRITICAL_SECTION*>(&mCriticalSectionStorage));
 }
