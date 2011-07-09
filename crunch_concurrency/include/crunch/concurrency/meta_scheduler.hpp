@@ -55,10 +55,6 @@ public:
     class Context
     {
     public:
-        void WaitFor(IWaitable& waitable, WaitMode waitMode = WaitMode::Run());
-        void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
-        std::vector<IWaitable*> WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
-
         void Run(IWaitable& until);
         void Release();
     };

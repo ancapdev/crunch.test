@@ -66,7 +66,7 @@ public:
         }
     }
 
-    void Release()
+    CRUNCH_ALWAYS_INLINE void Release()
     {
         if (--mRefCount == 0)
         {
@@ -170,22 +170,6 @@ private:
     uint32 mRefCount;
     Detail::SystemSemaphore mWaitSemaphore;
 };
-
-
-void MetaScheduler::Context::WaitFor(IWaitable& waitable, WaitMode waitMode)
-{
-    static_cast<ContextImpl*>(this)->WaitFor(waitable, waitMode);
-}
-
-void MetaScheduler::Context::WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
-{
-    static_cast<ContextImpl*>(this)->WaitForAll(waitables, count, waitMode);
-}
-
-std::vector<IWaitable*> MetaScheduler::Context::WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
-{
-    return static_cast<ContextImpl*>(this)->WaitForAny(waitables, count, waitMode);
-}
 
 void MetaScheduler::Context::Run(IWaitable& until)
 {

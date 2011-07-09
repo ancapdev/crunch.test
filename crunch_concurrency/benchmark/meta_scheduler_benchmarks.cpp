@@ -33,14 +33,14 @@ BOOST_AUTO_TEST_CASE(SingleThreadedWaitForReadyWaitableBenchmark)
     MetaScheduler ms(schedulers);
     MetaScheduler::Context& context = ms.AcquireContext();
     SetCurrentThreadAffinity(ProcessorAffinity(0));
-    int const reps = 10000;
+    int const reps = 1000;
     NullWaitable waitable;
     Stopwatch stopwatch;
 
-    ResultTable<std::tuple<char const*, char const*, double, double, double, double, double>> results(
+    ResultTable<std::tuple<char const*, double, double, double, double, double>> results(
         "WaitForReady",
         1,
-        std::make_tuple("call_mode", "wait_mode", "min", "max", "mean", "median", "stddev"));
+        std::make_tuple("wait_mode", "min", "max", "mean", "median", "stddev"));
 
     typedef std::tuple<char const*, WaitMode> NamedWaitMode;
     std::array<NamedWaitMode, 3> const waitModes =
@@ -54,35 +54,24 @@ BOOST_AUTO_TEST_CASE(SingleThreadedWaitForReadyWaitableBenchmark)
 
     std::for_each(waitModes.begin(), waitModes.end(), [&] (NamedWaitMode const& waitMode)
     {
-        for (int direct = 0; direct != 2; ++direct)
+        profiler.Reset();
+        while (!profiler.IsDone())
         {
-            profiler.Reset();
-            while (!profiler.IsDone())
-            {
-                stopwatch.Start();
-                if (direct == 0)
-                {
-                    for (int i = 0; i < reps; ++i)
-                        WaitFor(waitable, std::get<1>(waitMode));
-                }
-                else
-                {
-                    for (int i = 0; i < reps; ++i)
-                        context.WaitFor(waitable, std::get<1>(waitMode));
-                }
-                stopwatch.Stop();
-                profiler.AddSample(stopwatch.GetElapsedNanoseconds() / reps);
-            }
-
-            results.Add(std::make_tuple(
-                direct == 0 ? "global" : "context",
-                std::get<0>(waitMode),
-                profiler.GetMin(),
-                profiler.GetMax(),
-                profiler.GetMean(),
-                profiler.GetMedian(),
-                profiler.GetStdDev()));
+            stopwatch.Start();
+            for (int i = 0; i < reps; ++i)
+                WaitFor(waitable, std::get<1>(waitMode));
+            stopwatch.Stop();
+            profiler.AddSample(stopwatch.GetElapsedNanoseconds() / reps);
         }
+
+        results.Add(std::make_tuple(
+            std::get<0>(waitMode),
+            profiler.GetMin(),
+            profiler.GetMax(),
+            profiler.GetMean(),
+            profiler.GetMedian(),
+            profiler.GetStdDev()));
+
     });
 
     context.Release();
