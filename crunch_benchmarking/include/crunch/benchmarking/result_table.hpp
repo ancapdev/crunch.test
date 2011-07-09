@@ -57,7 +57,7 @@ namespace Detail
         static void Add(ResultTableDescriptor& descriptor, NameType const& names)
         {
             ColumnAdder<RowType, Index - 1>::Add(descriptor, names);
-            descriptor.AddColumn(std::get<Index - 1>(names), GetColumnType<std::tuple_element<Index - 1, RowType>::type>());
+            descriptor.AddColumn(std::get<Index - 1>(names), GetColumnType<typename std::tuple_element<Index - 1, RowType>::type>());
         }
     };
 

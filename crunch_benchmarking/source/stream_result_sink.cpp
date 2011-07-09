@@ -5,6 +5,7 @@
 #include "crunch/base/assert.hpp"
 
 #include <algorithm>
+#include <cstring>
 #include <iomanip>
 #include <ostream>
 
@@ -29,7 +30,7 @@ void StreamResultSink::EndTable()
     std::vector<std::size_t> columnWidths;
 
     for (std::size_t i = 0; i < numColumns; ++i)
-        columnWidths.push_back(strlen(mCurrentDescriptor->GetColumnName(i)));
+        columnWidths.push_back(std::strlen(mCurrentDescriptor->GetColumnName(i)));
 
     std::for_each(mRows.begin(), mRows.end(), [&] (Row const& r) {
         CRUNCH_ASSERT(r.size() == numColumns);
