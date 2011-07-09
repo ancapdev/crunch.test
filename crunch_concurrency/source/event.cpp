@@ -7,64 +7,94 @@
 namespace Crunch { namespace Concurrency {
 
 Event::Event(bool initialState)
-    : mWaiters(initialState ? reinterpret_cast<Waiter*>(STATE_BIT) : nullptr, MEMORY_ORDER_RELAXED)
-{ }
+    : mList(initialState ? EVENT_SET_BIT : 0, MEMORY_ORDER_RELAXED)
+{}
 
 void Event::AddWaiter(Waiter* waiter)
 {
-    CRUNCH_ASSERT((reinterpret_cast<std::size_t>(waiter) & FLAG_BITS) == 0);
-
     ExponentialBackoff backoff;
-
-    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
-
+    uint64 head = mList.Load(MEMORY_ORDER_RELAXED);
     for (;;)
     {
-        // Check for ready flag
-        if (reinterpret_cast<std::size_t>(head) & STATE_BIT)
+        if (head & EVENT_SET_BIT)
         {
             waiter->Notify();
             return;
         }
 
-        // Check for lock flag
-        if (reinterpret_cast<std::size_t>(head) & LOCK_BIT)
-        {
-            backoff.Pause();
-            head = mWaiters.Load(MEMORY_ORDER_RELAXED);
-        }
-        else
-        {
-            // Attempt insertion
-            waiter->next = head;
-            if (mWaiters.CompareAndSwap(waiter, head))
-                return;
+        waiter->next = GetPointer(head);
+        uint64 const newHead = SetPointer(head, waiter) + ABA_ADDEND;
+        if (mList.CompareAndSwap(newHead, head))
+            return;
 
-            // New head is loaded as part of CAS
-            backoff.Pause();
-        }
+        backoff.Pause();
     }
 }
 
 bool Event::RemoveWaiter(Waiter* waiter)
 {
-    CRUNCH_ASSERT((reinterpret_cast<std::size_t>(waiter) & FLAG_BITS) == 0);
-
     ExponentialBackoff backoff;
-
-    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
-
+    uint64 head = mList.Load(MEMORY_ORDER_RELAXED);
     for (;;)
     {
-        if ((reinterpret_cast<std::size_t>(head) & LOCK_BIT) != 0)
+        // If another remove is in progress, wait for completion
+        if (head & LOCK_BIT)
         {
-            head = mWaiters.Load(MEMORY_ORDER_RELAXED);
+            head = mList.Load(MEMORY_ORDER_RELAXED);
         }
-        else if (mWaiters.CompareAndSwap(reinterpret_cast<Waiter*>(LOCK_BIT), head))
+        else
         {
-            head = RemoveWaiterFromList(head, waiter);
-            mWaiters.Store(head, MEMORY_ORDER_RELEASE);
-            return true;
+            // If empty and not locked, nothing to remove
+            if ((head & (PTR_MASK | LOCK_BIT)) == 0)
+                return false;
+
+            Waiter* const headPtr = GetPointer(head);
+            if (headPtr == waiter)
+            {
+                // If waiter is at head, do simple pop
+                uint64 const newHead = SetPointer(head, headPtr->next) + ABA_ADDEND;
+                if (mList.CompareAndSwap(newHead, head))
+                    return true;
+            }
+            else
+            {
+                // Need to take ownership of list. Lock and swap with empty list.
+                uint64 const empty = ((head & ~PTR_MASK) | LOCK_BIT) + ABA_ADDEND;
+                if (mList.CompareAndSwap(empty, head))
+                {
+                    bool removed = false;
+                    Waiter* current = headPtr;
+                    while (current->next != nullptr)
+                    {
+                        if (current->next == waiter)
+                        {
+                            current->next = waiter->next;
+                            removed = true;
+                            break;
+                        }
+
+                        current = current->next;
+                    }
+                    Waiter* tail = current;
+                    while (tail->next != nullptr)
+                        tail = tail->next;
+
+                    // Add list back
+                    uint64 currentHead = empty;
+                    for (;;)
+                    {
+                        CRUNCH_ASSERT((currentHead & EVENT_SET_BIT) == 0);
+                        CRUNCH_ASSERT((currentHead & LOCK_BIT) != 0);
+
+                        tail->next = GetPointer(currentHead);
+                        uint64 const newHead = (SetPointer(currentHead, headPtr) ^ LOCK_BIT) + ABA_ADDEND;
+                        if (mList.CompareAndSwap(newHead, currentHead))
+                            return true;
+
+                        backoff.Pause();
+                    }
+                }
+            }
         }
 
         backoff.Pause();
@@ -79,33 +109,35 @@ bool Event::IsOrderDependent() const
 void Event::Set()
 {
     ExponentialBackoff backoff;
-
-    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
-
+    uint64 head = mList.Load(MEMORY_ORDER_RELAXED);
     for (;;)
     {
-        // If we are already set, return
-        if ((reinterpret_cast<std::size_t>(head) & STATE_BIT) != 0)
+        // If already set, return
+        if (head & EVENT_SET_BIT)
             return;
 
-        // Acquire lock and notify waiters
-        // Set state bit on acquire so AddWaiter doesn't block on the lock
-        if ((reinterpret_cast<std::size_t>(head) & LOCK_BIT) == 0 &&
-            mWaiters.CompareAndSwap(reinterpret_cast<Waiter*>(LOCK_BIT | STATE_BIT), head))
+        // Wait for list to be unlocked before notifying waiters
+        if ((head & LOCK_BIT) == 0)
         {
-            Waiter* current = head;
-            while (current != nullptr)
+            if ((head & PTR_MASK) == 0)
             {
-                // Cache next now because we can't access waiter after calling Notify()
-                Waiter* next = current->next;
-                current->Notify();
-                current = next;
+                // No waiters to notify, only need to set state bit
+                uint64 const newHead = (head | EVENT_SET_BIT) + ABA_ADDEND;
+                if (mList.CompareAndSwap(newHead, head))
+                    return;
             }
-
-            // Release the lock, clear the list, and set state bit
-            mWaiters.Store(reinterpret_cast<Waiter*>(STATE_BIT));
-
-            return;
+            else
+            {
+                // Need to acquire lock on list and notify waiters
+                uint64 const lockedHead = ((head & ~PTR_MASK) | LOCK_BIT | EVENT_SET_BIT) + ABA_ADDEND;
+                if (mList.CompareAndSwap(lockedHead, head))
+                {
+                    NotifyAllWaiters(GetPointer(head));
+                    // Clear lock flag. Event may be have been reset so xor in rather than store the unlock
+                    mList.Xor(LOCK_BIT, MEMORY_ORDER_RELEASE);
+                    return;
+                }
+            }
         }
 
         backoff.Pause();
@@ -114,31 +146,12 @@ void Event::Set()
 
 void Event::Reset()
 {
-    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
-    
-    ExponentialBackoff backoff;
-
-    for (;;)
-    {
-        // If already reset, nothing to do
-        if ((reinterpret_cast<std::size_t>(head) & STATE_BIT) == 0)
-            return;
-
-        // If the event is in a signalled stated it must either be in the process of signalling or empty
-        CRUNCH_ASSERT((reinterpret_cast<std::size_t>(head) & ~LOCK_BIT) == STATE_BIT);
-
-        // If lock is taken need to wait for it to complete
-            if ((reinterpret_cast<std::size_t>(head) & LOCK_BIT) == 0 &&
-            mWaiters.CompareAndSwap(nullptr, head))
-            return;
-
-        backoff.Pause();
-    }
+    mList.And(~EVENT_SET_BIT);
 }
 
 bool Event::IsSet() const
 {
-    return (reinterpret_cast<std::size_t>(mWaiters.Load(MEMORY_ORDER_RELAXED)) & STATE_BIT) != 0;
+    return (mList.Load(MEMORY_ORDER_RELAXED) & EVENT_SET_BIT) != 0;
 }
 
 }}

@@ -5,38 +5,63 @@
 #define CRUNCH_CONCURRENCY_EVENT_HPP
 
 #include "crunch/base/override.hpp"
+#include "crunch/base/stdint.hpp"
 #include "crunch/concurrency/atomic.hpp"
 #include "crunch/concurrency/waitable.hpp"
 
 namespace Crunch { namespace Concurrency {
 
-// TODO: Make AddWaiter run concurrently with RemoveWaiter by having RemoveWaiter
-//       reset the list on lock and and concatenate the old and new list on unlock.
-//       Complexity O(N) in the number of waiters in the original list
-//       Already the same for actual removal
 class Event : public IWaitable
 {
 public:
     Event(bool initialState = false);
 
+    // Locked with RemoveWaiter
     void Set();
+
+    // Wait free
     void Reset();
+
+    // Wait free
     bool IsSet() const;
 
+    // Lock free
     virtual void AddWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
+
+    // Locked with RemoveWaiter and Set
     virtual bool RemoveWaiter(Waiter* waiter) CRUNCH_OVERRIDE;
+
+    // Constant
     virtual bool IsOrderDependent() const CRUNCH_OVERRIDE;
 
 private:
-    static const std::size_t LOCK_BIT = 1;
-    static const std::size_t STATE_BIT = 2;
-    static const std::size_t FLAG_BITS = 3;
+#if (CRUNCH_PTR_SIZE == 4)
+    static uint64 const EVENT_SET_BIT = 1ull << 32;
+    static uint64 const LOCK_BIT = 2ull << 32;
+    static uint64 const FLAG_MASK = 3ull << 32;
+    static uint64 const ABA_ADDEND = 4ull << 32;
+    static uint64 const PTR_MASK = 0xffffffffull;
+#else
+    // Assume 48 bit address space and 4 byte alignment
+    static uint64 const EVENT_SET_BIT = 1;
+    static uint64 const LOCK_BIT = 2;
+    static uint64 const FLAG_MASK = 3;
+    static uint64 const ABA_ADDEND = 1ull << 48;
+    static uint64 const PTR_MASK = (ABA_ADDEND - 1) & ~FLAG_MASK;
+#endif
 
-    // Reserves lower 2 bits of pointer. I.e., pointer must be 4 byte aligned
-    // Bit 0 = lock bit
-    // Bit 1 = state bit
-    // Doesn't need to ABA protection because removal is always by lock
-    Atomic<Waiter*> mWaiters;
+    static Waiter* GetPointer(uint64 ptrAndState)
+    {
+        return reinterpret_cast<Waiter*>(ptrAndState & PTR_MASK);
+    }
+
+    static uint64 SetPointer(uint64 ptrAndState, Waiter* ptr)
+    {
+        CRUNCH_ASSERT((reinterpret_cast<uint64>(ptr) & ~PTR_MASK) == 0);
+        return (ptrAndState & ~PTR_MASK) | reinterpret_cast<uint64>(ptr);
+    }
+
+    Atomic<uint64> mList;
 };
 
 }}
