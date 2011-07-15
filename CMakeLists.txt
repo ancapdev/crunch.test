@@ -105,7 +105,7 @@ endmacro()
 
 macro(crunch_add_benchmark _name)
   add_custom_target("run-${_name}"
-    ${_name} "--log_level=message"
+    ${_name}
     WORKING_DIRECTORY ${CMAKE_CURRENTY_BINARY_DIR}
     VERBATIM)
 endmacro()
