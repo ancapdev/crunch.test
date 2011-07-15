@@ -11,6 +11,7 @@
 #include <iosfwd>
 #include <memory>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 namespace Crunch { namespace Benchmarking {
@@ -31,7 +32,7 @@ public:
     virtual void Add(const std::string& value);
 
 private:
-    typedef std::vector<std::string> Row;
+    typedef std::vector<std::pair<std::string, bool>> Row;
     typedef std::vector<Row> RowList;
 
     std::ostream& mStream;

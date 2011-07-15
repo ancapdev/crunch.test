@@ -36,7 +36,7 @@ void StreamResultSink::EndTable()
     std::for_each(mRows.begin(), mRows.end(), [&] (Row const& r) {
         CRUNCH_ASSERT(r.size() == numColumns);
         for (std::size_t i = 0; i < numColumns; ++i)
-            columnWidths[i] = std::max(columnWidths[i], r[i].size());
+            columnWidths[i] = std::max(columnWidths[i], r[i].first.size());
     });
 
     if (mShowProgress)
@@ -66,8 +66,15 @@ void StreamResultSink::EndTable()
     std::for_each(mRows.begin(), mRows.end(), [&] (Row const& r) {
         mStream << "| ";
         for (std::size_t i = 0; i < numColumns; ++i)
-            mStream << std::setw(columnWidths[i]) << r[i] << " | ";
+        {
+            if (r[i].second)
+                mStream << std::left;
+            else
+                mStream << std::right;
+            mStream << std::setw(columnWidths[i]) << r[i].first << " | ";
+        }
         mStream << std::endl;
+        mStream << std::right;
     });
 
     addSeparator();
@@ -93,19 +100,19 @@ void StreamResultSink::Add(double value)
 {
     mTempStream.str("");
     mTempStream << value;
-    mRows.back().push_back(mTempStream.str());
+    mRows.back().push_back(std::make_pair(mTempStream.str(), false));
 }
 
 void StreamResultSink::Add(int32 value)
 {
     mTempStream.str("");
     mTempStream << value;
-    mRows.back().push_back(mTempStream.str());
+    mRows.back().push_back(std::make_pair(mTempStream.str(), false));
 }
 
 void StreamResultSink::Add(const std::string& value)
 {
-    mRows.back().push_back(value);
+    mRows.back().push_back(std::make_pair(value, true));
 }
 
 
