@@ -28,10 +28,10 @@ namespace Detail
     template<typename RowType> struct ColumnNameTuple : ColumnNameTuple_<std::tuple_size<RowType>::value> {};
 
     template<typename T> ColumnType GetColumnType();
-    template<> ColumnType GetColumnType<double>() { return ColumnType::Float64; }
-    template<> ColumnType GetColumnType<int32>() { return ColumnType::Int32; }
-    template<> ColumnType GetColumnType<std::string>() { return ColumnType::String; }
-    template<> ColumnType GetColumnType<char const*>() { return ColumnType::String; }
+    template<> inline ColumnType GetColumnType<double>() { return ColumnType::Float64; }
+    template<> inline ColumnType GetColumnType<int32>() { return ColumnType::Int32; }
+    template<> inline ColumnType GetColumnType<std::string>() { return ColumnType::String; }
+    template<> inline ColumnType GetColumnType<char const*>() { return ColumnType::String; }
 
     template<typename RowType, std::size_t Index = std::tuple_size<RowType>::value>
     struct ResultAdder
