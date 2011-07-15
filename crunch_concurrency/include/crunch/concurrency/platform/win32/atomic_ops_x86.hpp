@@ -159,13 +159,17 @@ inline long AtomicSwap(long volatile& dst, long src, MemoryOrder = MEMORY_ORDER_
     return _InterlockedExchange(&dst, src);
 }
 
-#if defined (CRUNCH_ARCH_X86_64)
+
 inline __int64 AtomicSwap(__int64 volatile& dst, __int64 src, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
     CRUNCH_ASSERT_ALIGNMENT(&dst, 8);
+#if defined (CRUNCH_ARCH_X86_64)
     return _InterlockedExchange64(&dst, src);
-}
+#else
+    return Detail::FallbackAtomicOp(dst, [=] (__int64) { return src; });
 #endif
+}
+
 
 inline bool AtomicCompareAndSwap(short volatile& dst, short src, short& cmp, MemoryOrder = MEMORY_ORDER_SEQ_CST)
 {
