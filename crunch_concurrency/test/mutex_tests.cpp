@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(AddWaiterToUnlockedTest)
     m.AddWaiter(&waiter);
     BOOST_CHECK(acquired);
     BOOST_CHECK(m.IsLocked());
-    m.Release();
+    m.Unlock();
     BOOST_CHECK(!m.IsLocked());
 }
 
@@ -44,14 +44,14 @@ BOOST_AUTO_TEST_CASE(AddWaiterToLockedTest)
     BOOST_CHECK(!acquired2);
     BOOST_CHECK(!acquired3);
     BOOST_CHECK(m.IsLocked());
-    m.Release();
+    m.Unlock();
     BOOST_CHECK(!acquired2);
     BOOST_CHECK(acquired3);
     BOOST_CHECK(m.IsLocked());
-    m.Release();
+    m.Unlock();
     BOOST_CHECK(acquired2);
     BOOST_CHECK(m.IsLocked());
-    m.Release();
+    m.Unlock();
     BOOST_CHECK(!m.IsLocked());
 }
 
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(RemoveWaiterTest)
     BOOST_CHECK(!acquired2);
     BOOST_CHECK(m.IsLocked());
     m.RemoveWaiter(&waiter2);
-    m.Release();
+    m.Unlock();
     BOOST_CHECK(!acquired2);
     BOOST_CHECK(!m.IsLocked());
 }

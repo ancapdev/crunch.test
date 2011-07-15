@@ -29,15 +29,19 @@ inline void Pause(int count)
 }
 #endif
 
-class ExponentialBackoff
+template<int PauseLimit>
+class ExponentialBackoffT
 {
 public:
     static int const DefaultYieldLimit = 16;
 
+    ExponentialBackoffT() : mCount(1) {}
+    /*
     ExponentialBackoff(int yieldLimit = DefaultYieldLimit)
         : mCount(1)
         , mLimit(yieldLimit)
     {}
+    */
 
     void Pause()
     {
@@ -73,9 +77,10 @@ public:
 
 private:
     int mCount;
-    int mLimit;
+    static int const mLimit = PauseLimit;
 };
 
+typedef ExponentialBackoffT<16> ExponentialBackoff;
 }}
 
 #endif

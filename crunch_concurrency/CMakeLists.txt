@@ -24,6 +24,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/processor_affinity.hpp
   include/crunch/concurrency/processor_topology.hpp
   include/crunch/concurrency/promise.hpp
+  # include/crunch/concurrency/semaphore.hpp
   include/crunch/concurrency/scheduler.hpp
   include/crunch/concurrency/thread.hpp
   include/crunch/concurrency/thread_local.hpp
@@ -34,6 +35,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/detail/system_event.hpp
   include/crunch/concurrency/detail/system_mutex.hpp
   include/crunch/concurrency/detail/system_semaphore.hpp
+  include/crunch/concurrency/detail/waiter_list.hpp
   source/event.cpp
   source/exceptions.cpp
   source/future_data.cpp
@@ -41,9 +43,11 @@ add_library(crunch_concurrency_lib
   source/mutex.cpp
   source/processor_affinity.cpp
   source/processor_topology.cpp
+  # source/semaphore.cpp
   source/thread.cpp
   source/thread_data.hpp
   source/thread_data.cpp
+  source/waiter_list.cpp
   source/platform/${PLATFORM_NAME}/processor_affinity.cpp
   source/platform/${PLATFORM_NAME}/processor_topology.cpp
   source/platform/${PLATFORM_NAME}/system_condition.cpp
@@ -79,8 +83,10 @@ target_link_libraries(crunch_concurrency_test
 crunch_add_test(crunch_concurrency_test)
 
 add_executable(crunch_concurrency_benchmark
-   benchmark/main.cpp
-   benchmark/meta_scheduler_benchmarks.cpp)
+  benchmark/atomic_benchmarks.cpp
+  benchmark/event_benchmarks.cpp
+  benchmark/main.cpp
+  benchmark/meta_scheduler_benchmarks.cpp)
 
 target_link_libraries(crunch_concurrency_benchmark
   crunch_benchmarking_lib

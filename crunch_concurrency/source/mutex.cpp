@@ -7,40 +7,67 @@
 
 namespace Crunch { namespace Concurrency {
 
-Mutex::Mutex()
-    : mWaiters(reinterpret_cast<Waiter*>(MUTEX_FREE_BIT), MEMORY_ORDER_RELAXED)
+Mutex::Mutex(uint32 spinCount)
+    : mWaiters(MUTEX_FREE_BIT)
+    , mSpinCount(spinCount)
 {}
 
-void Mutex::Release()
+void Mutex::Lock()
 {
-    ExponentialBackoff backoff;
-    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
-    for (;;)
+    uint64 head = MUTEX_FREE_BIT;
+    if (mWaiters.CompareAndSwap(0, head))
+        return;
+    
+    uint32 spinLeft = mSpinCount;
+    while (spinLeft--)
     {
-        CRUNCH_ASSERT_MSG((reinterpret_cast<std::size_t>(head) & MUTEX_FREE_BIT) == 0, "Attempting to release unlocked mutex");
-
-        if (head == nullptr)
+        head = mWaiters.Load(MEMORY_ORDER_RELAXED);
+        if (head == MUTEX_FREE_BIT)
         {
-            // No waiters, attempt to set free bit.
-            if (mWaiters.CompareAndSwap(reinterpret_cast<Waiter*>(MUTEX_FREE_BIT), head))
+            if (mWaiters.CompareAndSwap(0, head))
                 return;
         }
-        else if (reinterpret_cast<std::size_t>(head) & LIST_LOCK_BIT)
+        CRUNCH_PAUSE();
+    }
+
+    WaitFor(*this);
+}
+
+void Mutex::Unlock()
+{
+    uint64 head = 0;
+    if (mWaiters.CompareAndSwap(MUTEX_FREE_BIT, head))
+        return;
+
+    ExponentialBackoff backoff;
+    for (;;)
+    {
+        CRUNCH_ASSERT_MSG((head & MUTEX_FREE_BIT) == 0, "Attempting to release unlocked mutex");
+
+        Waiter* headPtr = Detail::WaiterList::GetPointer(head);
+        if (headPtr == nullptr)
+        {
+            CRUNCH_ASSERT((head & Detail::WaiterList::LOCK_BIT) == 0);
+
+            // No waiters, attempt to set free bit.
+            if (mWaiters.CompareAndSwap(MUTEX_FREE_BIT, head))
+                return;
+        }
+        else if (head & Detail::WaiterList::LOCK_BIT)
         {
             // Wait for lock release.
             head = mWaiters.Load(MEMORY_ORDER_RELAXED);
         }
         else 
         {
-            // Grab new head first to avoid write dependency on head being updated in CAS
-            Waiter* newHead = head->next;
-            CRUNCH_ASSERT((reinterpret_cast<std::size_t>(head) & MUTEX_FREE_BIT) == 0);
+            // Try to pop first waiter off list and signal
+            uint64 const newHead =
+                Detail::WaiterList::SetPointer(head, headPtr->next) +
+                Detail::WaiterList::ABA_ADDEND;
 
-            // Lock list and signal first waiter
-            if (mWaiters.CompareAndSwap(reinterpret_cast<Waiter*>(LIST_LOCK_BIT), head))
+            if (mWaiters.CompareAndSwap(newHead, head))
             {
-                head->Notify();
-                mWaiters.Store(newHead, MEMORY_ORDER_RELAXED);
+                headPtr->Notify();
                 return;
             }
         }
@@ -51,37 +78,37 @@ void Mutex::Release()
 
 bool Mutex::IsLocked() const
 {
-    return reinterpret_cast<std::size_t>(mWaiters.Load(MEMORY_ORDER_RELAXED)) != MUTEX_FREE_BIT;
+    return mWaiters.Load(MEMORY_ORDER_RELAXED) != MUTEX_FREE_BIT;
 }
 
 void Mutex::AddWaiter(Waiter* waiter)
 {
-    CRUNCH_ASSERT((reinterpret_cast<std::size_t>(waiter) & FLAG_BITS) == 0);
+    uint64 head = MUTEX_FREE_BIT;
+    if (mWaiters.CompareAndSwap(0, head))
+    {
+        waiter->Notify();
+        return;
+    }
 
     ExponentialBackoff backoff;
-    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
     for (;;)
     {
-        if (reinterpret_cast<std::size_t>(head) & MUTEX_FREE_BIT)
+        if (head & MUTEX_FREE_BIT)
         {
             // Mutex is unlocked. Attempt to lock.
-            CRUNCH_ASSERT((reinterpret_cast<std::size_t>(head) & MUTEX_FREE_BIT) == MUTEX_FREE_BIT);
-            if (mWaiters.CompareAndSwap(nullptr, head))
+            CRUNCH_ASSERT(head == MUTEX_FREE_BIT);
+            if (mWaiters.CompareAndSwap(0, head))
             {
                 waiter->Notify();
                 return;
             }
         }
-        else if (reinterpret_cast<std::size_t>(head) & LIST_LOCK_BIT)
-        {
-            // List is locked. Reload head and retry.
-            head = mWaiters.Load(MEMORY_ORDER_RELAXED);
-        }
         else
         {
-            // Mutex is locked, list is unlocked. Attempt to insert waiter
-            waiter->next = head;
-            if (mWaiters.CompareAndSwap(waiter, head))
+            // Mutex is locked, attempt to insert waiter
+            waiter->next = Detail::WaiterList::GetPointer(head);
+            uint64 const newHead = Detail::WaiterList::SetPointer(head, waiter) + Detail::WaiterList::ABA_ADDEND;
+            if (mWaiters.CompareAndSwap(newHead, head))
                 return;
         }
 
@@ -91,26 +118,7 @@ void Mutex::AddWaiter(Waiter* waiter)
 
 bool Mutex::RemoveWaiter(Waiter* waiter)
 {
-    CRUNCH_ASSERT((reinterpret_cast<std::size_t>(waiter) & FLAG_BITS) == 0);
-
-    ExponentialBackoff backoff;
-    Waiter* head = mWaiters.Load(MEMORY_ORDER_RELAXED);
-
-    for (;;)
-    {
-        if ((reinterpret_cast<std::size_t>(head) & LIST_LOCK_BIT) != 0)
-        {
-            head = mWaiters.Load(MEMORY_ORDER_RELAXED);
-        }
-        else if (mWaiters.CompareAndSwap(reinterpret_cast<Waiter*>(LIST_LOCK_BIT), head))
-        {
-            head = RemoveWaiterFromList(head, waiter);
-            mWaiters.Store(head, MEMORY_ORDER_RELEASE);
-            return true;
-        }
-
-        backoff.Pause();
-    }
+    return mWaiters.RemoveWaiter(waiter);
 }
 
 bool Mutex::IsOrderDependent() const

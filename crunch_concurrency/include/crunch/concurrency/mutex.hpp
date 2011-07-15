@@ -5,8 +5,8 @@
 #define CRUNCH_CONCURRENCY_MUTEX_HPP
 
 #include "crunch/base/override.hpp"
-#include "crunch/concurrency/atomic.hpp"
-#include "crunch/concurrency/waitable.hpp"
+#include "crunch/base/stdint.hpp"
+#include "crunch/concurrency/detail/waiter_list.hpp"
 
 namespace Crunch { namespace Concurrency {
 
@@ -14,9 +14,11 @@ namespace Crunch { namespace Concurrency {
 class Mutex : public IWaitable
 {
 public:
-    Mutex();
+    Mutex(uint32 spinCount = 0);
 
-    void Release();
+    void Lock();
+    
+    void Unlock();
 
     bool IsLocked() const;
 
@@ -25,14 +27,12 @@ public:
     virtual bool IsOrderDependent() const CRUNCH_OVERRIDE;
 
 private:
-    static const std::size_t LIST_LOCK_BIT = 1;
     // Set when free rather than locked so we don't have to strip off
     // locked bit when building waiter list
-    static const std::size_t MUTEX_FREE_BIT = 2;
-    static const std::size_t FLAG_BITS = 3;
+    static uint64 const MUTEX_FREE_BIT = Detail::WaiterList::USER_FLAG_BIT;
 
-    // TODO: factor shared Event and Mutex waiter code into common class
-    Atomic<Waiter*> mWaiters;
+    Detail::WaiterList mWaiters;
+    uint32 mSpinCount;
 };
 
 }}
