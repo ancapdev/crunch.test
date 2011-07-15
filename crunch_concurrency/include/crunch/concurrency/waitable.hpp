@@ -4,6 +4,7 @@
 #ifndef CRUNCH_CONCURRENCY_WAITABLE_HPP
 #define CRUNCH_CONCURRENCY_WAITABLE_HPP
 
+#include "crunch/base/assert.hpp"
 #include "crunch/base/override.hpp"
 #include "crunch/base/stdint.hpp"
 
@@ -19,6 +20,27 @@ struct Waiter
     Waiter* next;
 };
 
+/// Remove waiter from list if wait is guaranteed to not be at head
+/// \param head Start of list
+/// \param waiter The waiter to remove
+/// \return true if removed, otherwise false
+inline bool RemoveWaiterFromListNotAtHead(Waiter* head, Waiter* waiter)
+{
+    CRUNCH_ASSERT(head != waiter);
+
+    Waiter* current = head;
+    while (current->next != nullptr)
+    {
+        if (current->next == waiter)
+        {
+            current->next = waiter->next;
+            return true;
+        }
+        current = current->next;
+    }
+    return false;
+}
+
 /// Remove waiter from list
 /// \param head Start of list
 /// \param waiter The waiter to remove
@@ -28,19 +50,10 @@ inline Waiter* RemoveWaiterFromList(Waiter* head, Waiter* waiter)
     if (head == waiter)
         return head->next;
 
-    Waiter* current = head;
-    while (current->next != nullptr)
-    {
-        if (current->next == waiter)
-        {
-            current->next = waiter->next;
-            break;
-        }
-
-        current = current->next;
-    }
+    RemoveWaiterFromListNotAtHead(head, waiter);
     return head;
 }
+
 
 inline void NotifyAllWaiters(Waiter* head)
 {
