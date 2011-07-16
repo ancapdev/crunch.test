@@ -26,7 +26,7 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/processor_topology.hpp
   include/crunch/concurrency/promise.hpp
   include/crunch/concurrency/self_destroying_waiter.hpp
-  # include/crunch/concurrency/semaphore.hpp
+  include/crunch/concurrency/semaphore.hpp
   include/crunch/concurrency/scheduler.hpp
   include/crunch/concurrency/thread.hpp
   include/crunch/concurrency/thread_local.hpp
@@ -48,7 +48,7 @@ add_library(crunch_concurrency_lib
   source/mutex.cpp
   source/processor_affinity.cpp
   source/processor_topology.cpp
-  # source/semaphore.cpp
+  source/semaphore.cpp
   source/thread.cpp
   source/thread_data.hpp
   source/thread_data.cpp
@@ -80,6 +80,7 @@ add_executable(crunch_concurrency_test
   test/meta_scheduler_tests.cpp
   test/mutex_tests.cpp
   test/processor_topology_tests.cpp
+  test/semaphore_tests.cpp
   test/thread_tests.cpp)
 
 target_link_libraries(crunch_concurrency_test
