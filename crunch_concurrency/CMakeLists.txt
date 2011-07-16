@@ -10,7 +10,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86" OR
     include/crunch/concurrency/platform/${PLATFORM_NAME}/atomic_word.hpp)
 endif()
     
-add_library(crunch_concurrency_lib
+crunch_add_library(crunch_concurrency_lib
   include/crunch/concurrency/atomic.hpp
   include/crunch/concurrency/destroyable_waiter.hpp
   include/crunch/concurrency/event.hpp

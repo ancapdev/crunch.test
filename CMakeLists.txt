@@ -65,6 +65,28 @@ else()
 endif()
 
 #
+# Install configuration
+#
+set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/stage/")
+set(CMAKE_DEBUG_POSTFIX "_d")
+set(CMAKE_RELEASE_POSTFIX "_r")
+set(CMAKE_RELWITHDEBINFO_POSTFIX "_rd")
+set(CMAKE_MINSIZEREL_POSTFIX "_rs")
+
+#
+# Wrappers around target macros
+#
+macro(crunch_add_library _name)
+  add_library(${_name} ${ARGN})
+  if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+    set(_libdir "lib64")
+  else()
+    set(_libdir "lib32")
+  endif()
+  install(TARGETS ${_name} DESTINATION "${_libdir}")
+endmacro()
+
+#
 # boost package
 #
 set(Boost_USE_STATIC_LIBS ON)
@@ -91,7 +113,7 @@ endif()
 include_directories(${Boost_INCLUDE_DIRS})
 
 #
-# boost test
+# tests
 #
 add_definitions(-DBOOST_TEST_ALTERNATIVE_INIT_API)
 
@@ -126,5 +148,11 @@ endforeach()
 
 foreach(_p ${PROJECTS})
   add_subdirectory(${_p})
+endforeach()
+
+foreach(_p ${PROJECTS})
+  if (EXISTS "${CMAKE_SOURCE_DIR}/${_p}/include")
+    install(DIRECTORY "${_p}/include/" DESTINATION "include")
+  endif()
 endforeach()
 
