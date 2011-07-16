@@ -14,6 +14,8 @@ namespace Crunch { namespace Concurrency {
 
 BOOST_AUTO_TEST_SUITE(EventBenchmarks)
 
+void NullFunc(void*) {}
+
 BOOST_AUTO_TEST_CASE(RemoveMe)
 {
     using namespace Benchmarking;
@@ -22,11 +24,7 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
 
     StatisticalProfiler profiler(0.01, 100, 1000, 10);
 
-    struct NullWaiter : Waiter
-    {
-        virtual void Notify() {}
-    };
-    
+
     ResultTable<std::tuple<int32, double, double, double, double, double>> results(
         "Event",
         1,
@@ -36,7 +34,9 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
     Event event;
 
     int const maxCount = 10;
-    NullWaiter waiters[maxCount];
+    DestroyableWaiter* waiters[maxCount];
+    for (int i = 0; i < maxCount; ++i)
+        waiters[i] = DestroyableWaiter::Create(&NullFunc, 0);
 
     int const reps = 100;
     for (int32 count = 1; count < maxCount; ++count)
@@ -49,9 +49,9 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
             for (int i = 0; i < reps; ++i)
             {
                 for (int j = 0; j < count; ++j)
-                    event.AddWaiter(waiters + j);
+                    event.AddWaiter(waiters[j]);
                 for (int j = 0; j < count; ++j)
-                    event.RemoveWaiter(waiters + j);
+                    event.RemoveWaiter(waiters[j]);
             }
             stopwatch.Stop();
             profiler.AddSample(stopwatch.GetElapsedNanoseconds() / (reps * count));
@@ -65,8 +65,11 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
             profiler.GetMedian(),
             profiler.GetStdDev()));
     }
+
+    for (int i = 0; i < maxCount; ++i)
+        waiters[i]->Destroy();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
 
-}}
+}} 

@@ -14,6 +14,8 @@ namespace Crunch { namespace Concurrency {
 class Mutex : public IWaitable
 {
 public:
+    using IWaitable::AddWaiter;
+
     Mutex(uint32 spinCount = 0);
 
     void Lock();

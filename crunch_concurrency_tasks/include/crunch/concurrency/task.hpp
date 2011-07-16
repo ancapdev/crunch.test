@@ -28,6 +28,7 @@ private:
     uint32 mBarrierCount;
     uint32 mAllocationSize;
     
+    /*
     struct EmbeddedWaiter : Waiter
     {
         EmbeddedWaiter(Task* task) : task(task) {}
@@ -53,6 +54,7 @@ private:
 
         Task* task;
     };
+    */
 };
 
 template<typename F, typename R>
@@ -66,7 +68,7 @@ class TaskImpl : public Task
 
     Detail::FutureData<R> mFutureData;
     FunctorStorageType mFunctorStorage;
-    EmbeddedWaiter mWaiters[];
+    // EmbeddedWaiter mWaiters[];
 };
 
 // For use when the contination doesn't fit in the original tasks allocation
@@ -82,7 +84,7 @@ class ContinuationImpl : public Task
 
     Detail::FutureData<R>* mFutureData;
     FunctorStorageType mFunctorStorage;
-    EmbeddedWaiter mWaiters[];
+    // EmbeddedWaiter mWaiters[];
 };
 
 }}

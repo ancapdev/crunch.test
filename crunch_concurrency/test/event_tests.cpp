@@ -10,18 +10,6 @@
 
 namespace Crunch { namespace Concurrency {
 
-struct TestWaiter : Waiter
-{
-    TestWaiter() : wakeupCount(0) { }
-
-    virtual void Notify() CRUNCH_OVERRIDE
-    {
-        wakeupCount++;
-    }
-
-    uint32 wakeupCount;
-};
-
 BOOST_AUTO_TEST_SUITE(EventTests)
 
 BOOST_AUTO_TEST_CASE(ConstructSetTest)
@@ -53,31 +41,42 @@ BOOST_AUTO_TEST_CASE(StateChangeTest)
 BOOST_AUTO_TEST_CASE(AddWaiterToSetTest)
 {
     Event e(true);
-    TestWaiter waiter;
+    volatile uint32 wakeupCount = 0;
 
     // Add waiter to set event. Should be called immediately.
-    e.AddWaiter(&waiter);
-    BOOST_CHECK_EQUAL(waiter.wakeupCount, 1u);
+    e.AddWaiter([&] { wakeupCount++; });
+    BOOST_CHECK_EQUAL(wakeupCount, 1u);
 }
 
 BOOST_AUTO_TEST_CASE(AddWaiterToUnsetTest)
 {
     Event e(false);
-    TestWaiter waiter;
+    volatile uint32 wakeupCount = 0;
+
+    struct CountIncrementer
+    {
+        static void Increment(void* count)
+        {
+            (*reinterpret_cast<uint32*>(count))++;
+        }
+    };
+    DestroyableWaiter* waiter = DestroyableWaiter::Create(&CountIncrementer::Increment, &wakeupCount);
 
     // Add waiter to unset event.
-    e.AddWaiter(&waiter);
-    BOOST_CHECK_EQUAL(waiter.wakeupCount, 0u);
+    e.AddWaiter(waiter);
+    BOOST_CHECK_EQUAL(wakeupCount, 0u);
 
     // Remove waiter and set event.
-    e.RemoveWaiter(&waiter);
+    e.RemoveWaiter(waiter);
     e.Set();
-    BOOST_CHECK_EQUAL(waiter.wakeupCount, 0u);
+    BOOST_CHECK_EQUAL(wakeupCount, 0u);
 
     // Add waiter and set event.
-    e.AddWaiter(&waiter);
+    e.AddWaiter(waiter);
     e.Set();
-    BOOST_CHECK_EQUAL(waiter.wakeupCount, 1u);
+    BOOST_CHECK_EQUAL(wakeupCount, 1u);
+
+    waiter->Destroy();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

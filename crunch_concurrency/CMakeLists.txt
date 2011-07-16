@@ -12,11 +12,12 @@ endif()
     
 add_library(crunch_concurrency_lib
   include/crunch/concurrency/atomic.hpp
-  include/crunch/concurrency/lock_free_slist.hpp
+  include/crunch/concurrency/destroyable_waiter.hpp
   include/crunch/concurrency/event.hpp
   include/crunch/concurrency/exceptions.hpp
   include/crunch/concurrency/fence.hpp
   include/crunch/concurrency/future.hpp
+  include/crunch/concurrency/lock_free_slist.hpp
   include/crunch/concurrency/lock_guard.hpp
   include/crunch/concurrency/memory_order.hpp
   include/crunch/concurrency/meta_scheduler.hpp
@@ -24,11 +25,15 @@ add_library(crunch_concurrency_lib
   include/crunch/concurrency/processor_affinity.hpp
   include/crunch/concurrency/processor_topology.hpp
   include/crunch/concurrency/promise.hpp
+  include/crunch/concurrency/self_destroying_waiter.hpp
   # include/crunch/concurrency/semaphore.hpp
   include/crunch/concurrency/scheduler.hpp
   include/crunch/concurrency/thread.hpp
   include/crunch/concurrency/thread_local.hpp
+  include/crunch/concurrency/wait_mode.hpp
   include/crunch/concurrency/waitable.hpp
+  include/crunch/concurrency/waiter.hpp
+  include/crunch/concurrency/waiter_utility.hpp
   include/crunch/concurrency/yield.hpp
   include/crunch/concurrency/detail/future_data.hpp
   include/crunch/concurrency/detail/system_condition.hpp
@@ -47,6 +52,7 @@ add_library(crunch_concurrency_lib
   source/thread.cpp
   source/thread_data.hpp
   source/thread_data.cpp
+  source/waiter.cpp
   source/waiter_list.cpp
   source/platform/${PLATFORM_NAME}/processor_affinity.cpp
   source/platform/${PLATFORM_NAME}/processor_topology.cpp

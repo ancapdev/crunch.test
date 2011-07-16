@@ -23,7 +23,19 @@ public:
         : mOwner(owner)
         , mWaitSemaphore(0)
         , mRefCount(1)
-    {}
+    {
+        mWaiter = DestroyableWaiter::Create(&ContextImpl::PostOnSemaphore, &mWaitSemaphore);
+    }
+
+    static void PostOnSemaphore(void* semaphore)
+    {
+        reinterpret_cast<Detail::SystemSemaphore*>(semaphore)->Post();
+    }
+
+    ~ContextImpl()
+    {
+        mWaiter->Destroy();
+    }
 
     MetaScheduler* GetOwner()
     {
@@ -35,7 +47,7 @@ public:
         mRefCount++;
     }
 
-    void Run(IWaitable& until)
+    void Run(IWaitable& /*until*/)
     {
         // while not done
         //     Acquire idle meta thread
@@ -58,12 +70,14 @@ public:
         //         Else
         //             Notify schedulers of meta thread move
 
+        /*
         volatile bool done = false;
         auto doneWaiter = MakeWaiter([&] {done = true;});
         until.AddWaiter(&doneWaiter);
         while (!done)
         {
         }
+        */
     }
 
     CRUNCH_ALWAYS_INLINE void Release()
@@ -79,9 +93,7 @@ public:
     {
         // TODO: Let active scheduler handle the wait if it can
         // TODO: Keep in mind if active scheduler is a fiber scheduler we might come back on a different system thread.. (and this thread might be used for other things.. i.e. waiter must be stack local)
-        
-        PostWaiter waiter(mWaitSemaphore);
-        waitable.AddWaiter(&waiter);
+        waitable.AddWaiter(mWaiter);
         mWaitSemaphore.SpinWait(waitMode.spinCount);
     }
 
@@ -111,13 +123,8 @@ public:
 
         if (unorderedCount != 0)
         {
-            PostWaiter* waiters = CRUNCH_STACK_ALLOC_T(PostWaiter, count);
-
             for (std::size_t i = 0; i < unorderedCount; ++i)
-            {
-                ::new (&waiters[i]) PostWaiter(mWaitSemaphore);
-                waitables[i]->AddWaiter(&waiters[i]);
-            }
+                waitables[i]->AddWaiter([&] { mWaitSemaphore.Post(); });
 
             for (std::size_t i = 0; i < unorderedCount; ++i)
                 mWaitSemaphore.SpinWait(waitMode.spinCount);
@@ -126,12 +133,13 @@ public:
 
     std::vector<IWaitable*> WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
     {
-        PostWaiter* waiters = CRUNCH_STACK_ALLOC_T(PostWaiter, count);
+        DestroyableWaiter** waiters = CRUNCH_STACK_ALLOC_T(DestroyableWaiter*, count);
 
         for (std::size_t i = 0; i < count; ++i)
         {
-            ::new (&waiters[i]) PostWaiter(mWaitSemaphore);
-            waitables[i]->AddWaiter(&waiters[i]);
+            // waiters[i] = Waiter::Create([&] { mWaitSemaphore.Post(); });
+            waiters[i] = DestroyableWaiter::Create(&ContextImpl::PostOnSemaphore, &mWaitSemaphore);
+            waitables[i]->AddWaiter(waiters[i]);
         }
 
         mWaitSemaphore.SpinWait(waitMode.spinCount);
@@ -139,7 +147,7 @@ public:
         std::vector<IWaitable*> signaled;
         for (std::size_t i = 0; i < count; ++i)
         {
-            if (!waitables[i]->RemoveWaiter(&waiters[i]))
+            if (!waitables[i]->RemoveWaiter(waiters[i]))
                 signaled.push_back(waitables[i]);
         }
 
@@ -148,27 +156,18 @@ public:
         for (std::size_t i = 1; i < signaled.size(); ++i)
             mWaitSemaphore.SpinWait(waitMode.spinCount);
 
+        // TODO: bulk free
+        for (std::size_t i = 0; i < count; ++i)
+            waiters[i]->Destroy();
+
         return signaled;
     }
 
 private:
-    struct PostWaiter : Waiter, NonCopyable
-    {
-        PostWaiter(Detail::SystemSemaphore& semaphore)
-            : semaphore(semaphore)
-        {}
-
-        virtual void Notify() CRUNCH_OVERRIDE
-        {
-            semaphore.Post();
-        }
-
-        Detail::SystemSemaphore& semaphore;
-    };
-
     MetaScheduler* mOwner;
     uint32 mRefCount;
     Detail::SystemSemaphore mWaitSemaphore;
+    DestroyableWaiter* mWaiter;
 };
 
 void MetaScheduler::Context::Run(IWaitable& until)
@@ -182,17 +181,6 @@ void MetaScheduler::Context::Release()
 }
 
 CRUNCH_THREAD_LOCAL MetaScheduler::ContextImpl* MetaScheduler::tCurrentContext = NULL;
-
-struct ContextRunState : Waiter
-{
-    ISchedulerContext* context;
-
-    virtual void Notify() CRUNCH_OVERRIDE
-    {
-        // Add to active set
-        // Wake up scheduler if sleeping
-    }
-};
 
 class MetaScheduler::MetaThread
 {

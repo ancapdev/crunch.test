@@ -12,6 +12,8 @@ namespace Crunch { namespace Concurrency {
 class Event : public IWaitable
 {
 public:
+    using IWaitable::AddWaiter;
+
     Event(bool initialState = false);
 
     // Locked with RemoveWaiter

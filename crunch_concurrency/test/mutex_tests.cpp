@@ -19,9 +19,8 @@ BOOST_AUTO_TEST_CASE(ConstructTest)
 BOOST_AUTO_TEST_CASE(AddWaiterToUnlockedTest)
 {
     Mutex m;
-    bool acquired = false;
-    auto waiter = MakeWaiter([&] { acquired = true; });
-    m.AddWaiter(&waiter);
+    volatile bool acquired = false;
+    m.AddWaiter([&] { acquired = true; });
     BOOST_CHECK(acquired);
     BOOST_CHECK(m.IsLocked());
     m.Unlock();
@@ -31,15 +30,12 @@ BOOST_AUTO_TEST_CASE(AddWaiterToUnlockedTest)
 BOOST_AUTO_TEST_CASE(AddWaiterToLockedTest)
 {
     Mutex m;
-    bool acquired1 = false;
-    bool acquired2 = false;
-    bool acquired3 = false;
-    auto waiter1 = MakeWaiter([&] { acquired1 = true; });
-    auto waiter2 = MakeWaiter([&] { acquired2 = true; });
-    auto waiter3 = MakeWaiter([&] { acquired3 = true; });
-    m.AddWaiter(&waiter1);
-    m.AddWaiter(&waiter2);
-    m.AddWaiter(&waiter3);
+    volatile bool acquired1 = false;
+    volatile bool acquired2 = false;
+    volatile bool acquired3 = false;
+    m.AddWaiter([&] { acquired1 = true; });
+    m.AddWaiter([&] { acquired2 = true; });
+    m.AddWaiter([&] { acquired3 = true; });
     BOOST_CHECK(acquired1);
     BOOST_CHECK(!acquired2);
     BOOST_CHECK(!acquired3);
@@ -58,19 +54,28 @@ BOOST_AUTO_TEST_CASE(AddWaiterToLockedTest)
 BOOST_AUTO_TEST_CASE(RemoveWaiterTest)
 {
     Mutex m;
-    bool acquired1 = false;
-    bool acquired2 = false;
-    auto waiter1 = MakeWaiter([&] { acquired1 = true; });
-    auto waiter2 = MakeWaiter([&] { acquired2 = true; });
-    m.AddWaiter(&waiter1);
-    m.AddWaiter(&waiter2);
+    volatile bool acquired1 = false;
+    volatile bool acquired2 = false;
+
+    struct SetAcquired
+    {
+        static void Do(void* flag)
+        {
+            *reinterpret_cast<bool*>(flag) = true;
+        }
+    };
+
+    DestroyableWaiter* waiter = DestroyableWaiter::Create(&SetAcquired::Do, &acquired2);
+    m.AddWaiter([&] { acquired1 = true; });
+    m.AddWaiter(waiter);
     BOOST_CHECK(acquired1);
     BOOST_CHECK(!acquired2);
     BOOST_CHECK(m.IsLocked());
-    m.RemoveWaiter(&waiter2);
+    m.RemoveWaiter(waiter);
     m.Unlock();
     BOOST_CHECK(!acquired2);
     BOOST_CHECK(!m.IsLocked());
+    waiter->Destroy();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

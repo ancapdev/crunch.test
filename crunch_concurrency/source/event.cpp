@@ -3,6 +3,7 @@
 
 #include "crunch/concurrency/event.hpp"
 #include "crunch/concurrency/yield.hpp"
+#include "crunch/concurrency/waiter_utility.hpp"
 
 namespace Crunch { namespace Concurrency {
 
