@@ -19,12 +19,15 @@ template<typename T, std::size_t S>
 class FixedVector : public Detail::FixedVectorBase<T, S>
 {
 public:
+    typedef Detail::FixedVectorBase<T, S> BaseType;
+    typedef FixedVector<T, S> ThisType;
+
     //
     // Construction
     // 
     FixedVector();
 
-    FixedVector(size_type n, T const& value = T());
+    FixedVector(typename ThisType::size_type n, T const& value = T());
 
     template<typename InputIt>
     FixedVector(InputIt first, InputIt last);
@@ -49,29 +52,29 @@ public:
     //
     // Iterators
     // 
-    iterator begin();
-    const_iterator begin() const;
-    iterator end();
-    const_iterator end() const;
+    T* begin();
+    T const* begin() const;
+    T* end();
+    T const* end() const;
 
     //
     // Capacity
     // 
-    size_type size() const;
-    size_type max_size() const;
-    void resize(size_type size);
-    void resize(size_type size, T value);
-    size_type capacity() const;
+    typename ThisType::size_type size() const;
+    typename ThisType::size_type max_size() const;
+    void resize(typename ThisType::size_type size);
+    void resize(typename ThisType::size_type size, T value);
+    typename ThisType::size_type capacity() const;
     bool empty() const;
-    void reserve(size_type size);
+    void reserve(typename ThisType::size_type size);
 
     //
     // Accessors
     // 
-    T& operator [] (size_type index);
-    T const& operator [] (size_type index) const;
-    T& at(size_type index);
-    T const& at(size_type index) const;
+    T& operator [] (typename ThisType::size_type index);
+    T const& operator [] (typename ThisType::size_type index) const;
+    T& at(typename ThisType::size_type index);
+    T const& at(typename ThisType::size_type index) const;
     T& front();
     T const& front() const;
     T& back();
@@ -82,16 +85,16 @@ public:
     // 
     template<typename InputIt>
     void assign(InputIt first, InputIt last);
-    void assign(size_type n, T const& value = T());
+    void assign(typename ThisType::size_type n, T const& value = T());
     void push_back(T const& value);
     void push_back(T&& value);
     void pop_back();
-    void insert(const_iterator where, T const& value);
-    void insert(const_iterator where, T&& value);
+    void insert(T const* where, T const& value);
+    void insert(T const* where, T&& value);
     template<typename InputIt>
-    void insert(const_iterator where, InputIt first, InputIt last);
-    void erase(const_iterator where);
-    void erase(const_iterator first, const_iterator last);
+    void insert(T const* where, InputIt first, InputIt last);
+    void erase(T const* where);
+    void erase(T const* first, T const* last);
     void swap(FixedVector<T, S>& rhs);
     void clear();
 
@@ -101,15 +104,15 @@ private:
     template<std::size_t RhsSize>
     void move_assign(FixedVector<T, RhsSize>&& rhs);
 
-    static void move_down(iterator first, iterator last, iterator where);
+    static void move_down(T* first, T* last, T* where);
 
     template<typename InputIt>
-    void insert_impl(const_iterator where, InputIt first, InputIt last, std::input_iterator_tag);
+    void insert_impl(T const* where, InputIt first, InputIt last, std::input_iterator_tag);
 
     template<typename InputIt>
-    void insert_impl(const_iterator where, InputIt first, InputIt last, std::forward_iterator_tag);
+    void insert_impl(T const* where, InputIt first, InputIt last, std::forward_iterator_tag);
 
-    size_type mSize;
+    typename ThisType::size_type mSize;
 };
 
 
@@ -119,7 +122,7 @@ FixedVector<T, S>::FixedVector()
 {}
 
 template<typename T, std::size_t S>
-FixedVector<T, S>::FixedVector(size_type n, T const& value)
+FixedVector<T, S>::FixedVector(typename ThisType::size_type n, T const& value)
     : mSize(0)
 {
     assign(n, value);
@@ -153,7 +156,7 @@ template<typename T, std::size_t S>
 FixedVector<T, S>::~FixedVector()
 {
     for (std::size_t i = 0; i < mSize; ++i)
-        GetStorage()[i].~T();
+        this->GetStorage()[i].~T();
 }
 
 template<typename T, std::size_t S>
@@ -175,25 +178,25 @@ FixedVector<T, S>& FixedVector<T, S>::operator = (FixedVector<T, RhsSize>&& rhs)
 template<typename T, std::size_t S>
 T* FixedVector<T, S>::begin()
 {
-    return GetStorage();
+    return this->GetStorage();
 }
 
 template<typename T, std::size_t S>
 T const* FixedVector<T, S>::begin() const
 {
-    return GetStorage();
+    return this->GetStorage();
 }
 
 template<typename T, std::size_t S>
 T* FixedVector<T, S>::end()
 {
-    return GetStorage() + mSize;
+    return this->GetStorage() + mSize;
 }
 
 template<typename T, std::size_t S>
 T const* FixedVector<T, S>::end() const
 {
-    return GetStorage() + mSize;
+    return this->GetStorage() + mSize;
 }
 
 template<typename T, std::size_t S>
@@ -209,7 +212,7 @@ typename FixedVector<T, S>::size_type FixedVector<T, S>::max_size() const
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::resize(size_type size)
+void FixedVector<T, S>::resize(typename ThisType::size_type size)
 {
     if (size < mSize)
         erase(begin() + size, end());
@@ -218,7 +221,7 @@ void FixedVector<T, S>::resize(size_type size)
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::resize(size_type size, T value)
+void FixedVector<T, S>::resize(typename ThisType::size_type size, T value)
 {
     if (size < mSize)
         erase(begin() + size, end());
@@ -239,38 +242,38 @@ bool FixedVector<T, S>::empty() const
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::reserve(size_type size)
+void FixedVector<T, S>::reserve(typename ThisType::size_type size)
 {
     if (size > max_size())
         ThrowLengthError("FixedVector::reserve() size over max size");
 }
 
 template<typename T, std::size_t S>
-T& FixedVector<T, S>::operator [] (size_type index)
+T& FixedVector<T, S>::operator [] (typename ThisType::size_type index)
 {
-    return GetStorage()[index];
+    return this->GetStorage()[index];
 }
 
 template<typename T, std::size_t S>
-T const& FixedVector<T, S>::operator [] (size_type index) const
+T const& FixedVector<T, S>::operator [] (typename ThisType::size_type index) const
 {
-    return GetStorage()[index];
+    return this->GetStorage()[index];
 }
 
 template<typename T, std::size_t S>
-T& FixedVector<T, S>::at(size_type index)
+T& FixedVector<T, S>::at(typename ThisType::size_type index)
 {
     if (index < mSize)
-        return GetStorage()[index];
+        return this->GetStorage()[index];
     else
         ThrowOutOfRange("FixedVector::at() out of range");
 }
 
 template<typename T, std::size_t S>
-T const& FixedVector<T, S>::at(size_type index) const
+T const& FixedVector<T, S>::at(typename ThisType::size_type index) const
 {
     if (index < mSize)
-        return GetStorage()[index];
+        return this->GetStorage()[index];
     else
         ThrowOutOfRange("FixedVector::at() out of range");
 }
@@ -278,25 +281,25 @@ T const& FixedVector<T, S>::at(size_type index) const
 template<typename T, std::size_t S>
 T& FixedVector<T, S>::front()
 {
-    return *GetStorage();
+    return *this->GetStorage();
 }
 
 template<typename T, std::size_t S>
 T const& FixedVector<T, S>::front() const
 {
-    return *GetStorage();
+    return *this->GetStorage();
 }
 
 template<typename T, std::size_t S>
 T& FixedVector<T, S>::back()
 {
-    return GetStorage()[mSize - 1];
+    return this->GetStorage()[mSize - 1];
 }
 
 template<typename T, std::size_t S>
 T const& FixedVector<T, S>::back() const
 {
-    return GetStorage()[index - 1];
+    return this->GetStorage()[mSize - 1];
 }
 
 template<typename T, std::size_t S>
@@ -308,7 +311,7 @@ void FixedVector<T, S>::assign(InputIt first, InputIt last)
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::assign(size_type n, T const& value)
+void FixedVector<T, S>::assign(typename ThisType::size_type n, T const& value)
 {
     T const valueCopy = value;
     erase(begin(), end());
@@ -321,7 +324,7 @@ void FixedVector<T, S>::push_back(T const& value)
     if (mSize >= S)
         ThrowLengthError("FixedVector::push_back grew too long");
 
-    new (GetStorage() + mSize) T(value);
+    new (this->GetStorage() + mSize) T(value);
     mSize++;
 }
 
@@ -331,7 +334,7 @@ void FixedVector<T, S>::push_back(T&& value)
     if (mSize >= S)
         ThrowLengthError("FixedVector::push_back grew too long");
 
-    new (GetStorage() + mSize) T(std::forward<T>(value));
+    new (this->GetStorage() + mSize) T(std::forward<T>(value));
     mSize++;
 }
 
@@ -339,35 +342,35 @@ template<typename T, std::size_t S>
 void FixedVector<T, S>::pop_back()
 {
     if (!empty())
-        GetStorage()[mSize--].~T();
+        this->GetStorage()[mSize--].~T();
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::insert(const_iterator where, T const& value)
+void FixedVector<T, S>::insert(T const* where, T const& value)
 {
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::insert(const_iterator where, T&& value)
+void FixedVector<T, S>::insert(T const* where, T&& value)
 {
 }
 
 template<typename T, std::size_t S>
 template<typename InputIt>
-void FixedVector<T, S>::insert(const_iterator where, InputIt first, InputIt last)
+void FixedVector<T, S>::insert(T const* where, InputIt first, InputIt last)
 {
     insert_impl(where, first, last, typename std::iterator_traits<InputIt>::iterator_category());
 }
 
 template<typename T, std::size_t S>
 template<typename InputIt>
-void FixedVector<T, S>::insert_impl(const_iterator where, InputIt first, InputIt last, std::input_iterator_tag)
+void FixedVector<T, S>::insert_impl(T const* where, InputIt first, InputIt last, std::input_iterator_tag)
 {
     if (first == last)
         return;
 
-    size_type const offset = where - begin();
-    size_type const oldSize = size();
+    typename ThisType::size_type const offset = where - begin();
+    typename ThisType::size_type const oldSize = size();
     try
     {
         for (; first != last; ++first)
@@ -384,7 +387,7 @@ void FixedVector<T, S>::insert_impl(const_iterator where, InputIt first, InputIt
 
 template<typename T, std::size_t S>
 template<typename InputIt>
-void FixedVector<T, S>::insert_impl(const_iterator where, InputIt first, InputIt last, std::forward_iterator_tag)
+void FixedVector<T, S>::insert_impl(T const* where, InputIt first, InputIt last, std::forward_iterator_tag)
 {
     auto const count = std::distance(first, last);
     if (count == 0)
@@ -399,7 +402,7 @@ void FixedVector<T, S>::insert_impl(const_iterator where, InputIt first, InputIt
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::erase(const_iterator where)
+void FixedVector<T, S>::erase(T const* where)
 {
     move_down(where + 1, end(), where);
     mSize--;
@@ -408,7 +411,7 @@ void FixedVector<T, S>::erase(const_iterator where)
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::erase(const_iterator first, const_iterator last)
+void FixedVector<T, S>::erase(T const* first, T const* last)
 {
 }
 
@@ -423,7 +426,7 @@ void FixedVector<T, S>::clear()
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::move_down(iterator first, iterator last, iterator where)
+void FixedVector<T, S>::move_down(T* first, T* last, T* where)
 {
     for (; first < last; ++first)
         *where++ = std::move(*first);
