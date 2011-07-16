@@ -118,8 +118,8 @@ set(PROJECTS
   crunch_base
   crunch_benchmarking
   crunch_concurrency
-  crunch_concurrency_tasks
-  crunch_containers)
+  crunch_concurrency_tasks)
+  # crunch_containers)
   
 foreach(_p ${PROJECTS})
   include_directories("${CMAKE_SOURCE_DIR}/${_p}/include")
