@@ -1,3 +1,6 @@
+# Copyright (c) 2011, Christian Rorvik
+# Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
+
 add_library(crunch_benchmarking_lib
   include/crunch/benchmarking/result_sink.hpp
   include/crunch/benchmarking/result_table.hpp
