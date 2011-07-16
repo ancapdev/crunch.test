@@ -96,7 +96,7 @@ public:
     void Set(T&& value)
     {
         CRUNCH_ASSERT(!Event::IsSet());
-        ::new (ResultAddress()) T(std::move(value));
+        ::new (ResultAddress()) T(std::forward<T>(value));
         Event::Set();
     }
 
