@@ -378,8 +378,24 @@ BOOST_AUTO_TEST_CASE(PushPopTest)
     BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
-BOOST_AUTO_TEST_CASE(AccessTest)
+BOOST_AUTO_TEST_CASE(AccessorTest)
 {
+    FixedVector<int, 4> v;
+    for (int i = 0; i < 4; ++i)
+        v.push_back(i);
+
+    BOOST_CHECK_EQUAL(v.front(), 0);
+    BOOST_CHECK_EQUAL(v.back(), 3);
+    BOOST_CHECK_EQUAL(v[0], 0);
+    BOOST_CHECK_EQUAL(v[1], 1);
+    BOOST_CHECK_EQUAL(v[2], 2);
+    BOOST_CHECK_EQUAL(v[3], 3);
+    BOOST_CHECK_EQUAL(&v[0], v.begin());
+    BOOST_CHECK_EQUAL(v.at(0), 0);
+    BOOST_CHECK_EQUAL(v.at(1), 1);
+    BOOST_CHECK_EQUAL(v.at(2), 2);
+    BOOST_CHECK_EQUAL(v.at(3), 3);
+    BOOST_CHECK_THROW(v.at(4), std::out_of_range);
 }
 
 BOOST_AUTO_TEST_CASE(SwapTest)
