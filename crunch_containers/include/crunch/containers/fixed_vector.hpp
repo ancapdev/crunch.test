@@ -5,6 +5,7 @@
 #define CRUNCH_CONTAINERS_FIXED_VECTOR_HPP
 
 #include "crunch/containers/exception.hpp"
+#include "crunch/containers/utility.hpp"
 #include "crunch/containers/detail/fixed_vector_base.hpp"
 
 #include <algorithm>
@@ -85,15 +86,16 @@ public:
     // 
     template<typename InputIt>
     void assign(InputIt first, InputIt last);
-    void assign(typename ThisType::size_type n, T const& value = T());
+    void assign(typename ThisType::size_type n, T const& value);
     void push_back(T const& value);
     void push_back(T&& value);
     void pop_back();
-    void insert(T const* where, T const& value);
-    void insert(T const* where, T&& value);
+    void insert(T* where, T const& value);
+    void insert(T* where, T&& value);
+    void insert(T* where, typename ThisType::size_type n, T const& value);
     template<typename InputIt>
-    void insert(T const* where, InputIt first, InputIt last);
-    void erase(T const* where);
+    void insert(T* where, InputIt first, InputIt last);
+    void erase(T* where);
     void erase(T const* first, T const* last);
     void swap(FixedVector<T, S>& rhs);
     void clear();
@@ -107,10 +109,10 @@ private:
     static void move_down(T* first, T* last, T* where);
 
     template<typename InputIt>
-    void insert_impl(T const* where, InputIt first, InputIt last, std::input_iterator_tag);
+    void insert_impl(T* where, InputIt first, InputIt last, std::input_iterator_tag);
 
     template<typename InputIt>
-    void insert_impl(T const* where, InputIt first, InputIt last, std::forward_iterator_tag);
+    void insert_impl(T* where, InputIt first, InputIt last, std::forward_iterator_tag);
 
     typename ThisType::size_type mSize;
 };
@@ -346,25 +348,69 @@ void FixedVector<T, S>::pop_back()
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::insert(T const* where, T const& value)
+void FixedVector<T, S>::insert(T* where, T const& value)
 {
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::insert(T const* where, T&& value)
+void FixedVector<T, S>::insert(T* where, T&& value)
 {
+}
+
+template<typename T, std::size_t S>
+void FixedVector<T, S>::insert(T* where, typename ThisType::size_type n, T const& value)
+{
+    if (n == 0)
+        return;
+
+    if (n + size() > capacity())
+        ThrowLengthError("Fixedvector::insert grew too long");
+
+    // In case value is in current range
+    T const temp = value;
+
+    if (where + n > end()) // spills off end
+    {
+        // Move to make space
+        UninitializedMove(where, end(), where + n);
+
+        try
+        {
+            // Fill over uninitialized end
+            std::uninitialized_fill_n(end(), n - (end() - where), temp);
+        }
+        catch (...)
+        {
+            // Destroy previously moved items
+            Destroy(where + n, end() + n);
+            throw;
+        }
+
+        std::fill_n(where, end() - where, temp);
+    }
+    else // all overlapping current range
+    {
+        // Move last n elements
+        UninitializedMove(end() - n, end(), end());
+        // Copy remaing upwards
+        std::copy_backward(where, end() - n, end());
+        // Insert into hole
+        std::fill_n(where, n, temp);
+    }
+
+    mSize += n;
 }
 
 template<typename T, std::size_t S>
 template<typename InputIt>
-void FixedVector<T, S>::insert(T const* where, InputIt first, InputIt last)
+void FixedVector<T, S>::insert(T* where, InputIt first, InputIt last)
 {
     insert_impl(where, first, last, typename std::iterator_traits<InputIt>::iterator_category());
 }
 
 template<typename T, std::size_t S>
 template<typename InputIt>
-void FixedVector<T, S>::insert_impl(T const* where, InputIt first, InputIt last, std::input_iterator_tag)
+void FixedVector<T, S>::insert_impl(T* where, InputIt first, InputIt last, std::input_iterator_tag)
 {
     if (first == last)
         return;
@@ -387,7 +433,7 @@ void FixedVector<T, S>::insert_impl(T const* where, InputIt first, InputIt last,
 
 template<typename T, std::size_t S>
 template<typename InputIt>
-void FixedVector<T, S>::insert_impl(T const* where, InputIt first, InputIt last, std::forward_iterator_tag)
+void FixedVector<T, S>::insert_impl(T* where, InputIt first, InputIt last, std::forward_iterator_tag)
 {
     auto const count = std::distance(first, last);
     if (count == 0)
@@ -402,7 +448,7 @@ void FixedVector<T, S>::insert_impl(T const* where, InputIt first, InputIt last,
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::erase(T const* where)
+void FixedVector<T, S>::erase(T* where)
 {
     move_down(where + 1, end(), where);
     mSize--;

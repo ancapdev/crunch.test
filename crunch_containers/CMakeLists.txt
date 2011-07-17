@@ -5,6 +5,7 @@ add_library(crunch_containers_lib
   include/crunch/containers/exception.hpp
   include/crunch/containers/fixed_vector.hpp
   include/crunch/containers/small_vector.hpp
+  include/crunch/containers/utility.hpp
   include/crunch/containers/detail/fixed_vector_base.hpp
   source/exception.cpp)
   
