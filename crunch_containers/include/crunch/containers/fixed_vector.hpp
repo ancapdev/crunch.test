@@ -33,22 +33,18 @@ public:
     template<typename InputIt>
     FixedVector(InputIt first, InputIt last);
 
-    template<std::size_t RhsSize>
-    FixedVector(FixedVector<T, RhsSize> const& rhs);
+    FixedVector(FixedVector<T, S> const& rhs);
 
-    template<std::size_t RhsSize>
-    FixedVector(FixedVector<T, RhsSize>&& rhs);
+    FixedVector(FixedVector<T, S>&& rhs);
 
     ~FixedVector();
 
     //
     // Assignment
     // 
-    template<std::size_t RhsSize>
-    FixedVector& operator = (FixedVector<T, RhsSize> const& rhs);
+    FixedVector& operator = (FixedVector<T, S> const& rhs);
 
-    template<std::size_t RhsSize>
-    FixedVector& operator = (FixedVector<T, RhsSize>&& rhs);
+    FixedVector& operator = (FixedVector<T, S>&& rhs);
 
     //
     // Iterators
@@ -103,8 +99,7 @@ public:
 private:
     // TODO: move utility functions to FixedVectorBase
 
-    template<std::size_t RhsSize>
-    void move_assign(FixedVector<T, RhsSize>&& rhs);
+    void move_assign(FixedVector<T, S>&& rhs);
 
     static void move_down(T* first, T* last, T* where);
 
@@ -139,16 +134,14 @@ FixedVector<T, S>::FixedVector(InputIt first, InputIt last)
 }
 
 template<typename T, std::size_t S>
-template<std::size_t RhsSize>
-FixedVector<T, S>::FixedVector(FixedVector<T, RhsSize> const& rhs)
+FixedVector<T, S>::FixedVector(FixedVector<T, S> const& rhs)
     : mSize(0)
 {
     assign(rhs.begin(), rhs.end());
 }
 
 template<typename T, std::size_t S>
-template<std::size_t RhsSize>
-FixedVector<T, S>::FixedVector(FixedVector<T, RhsSize>&& rhs)
+FixedVector<T, S>::FixedVector(FixedVector<T, S>&& rhs)
     : mSize(rhs.mSize)
 {
     move_assign(rhs);
@@ -162,16 +155,14 @@ FixedVector<T, S>::~FixedVector()
 }
 
 template<typename T, std::size_t S>
-template<std::size_t RhsSize>
-FixedVector<T, S>& FixedVector<T, S>::operator = (FixedVector<T, RhsSize> const& rhs)
+FixedVector<T, S>& FixedVector<T, S>::operator = (FixedVector<T, S> const& rhs)
 {
     assign(rhs.begin(), rhs.end());
     return *this;
 }
 
 template<typename T, std::size_t S>
-template<std::size_t RhsSize>
-FixedVector<T, S>& FixedVector<T, S>::operator = (FixedVector<T, RhsSize>&& rhs)
+FixedVector<T, S>& FixedVector<T, S>::operator = (FixedVector<T, S>&& rhs)
 {
     move_assign(rhs);
     return *this;

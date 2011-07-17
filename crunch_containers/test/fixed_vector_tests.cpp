@@ -2,6 +2,7 @@
 // Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
 
 #include "crunch/containers/fixed_vector.hpp"
+#include "./tracker.hpp"
 
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
@@ -10,56 +11,11 @@
 
 namespace Crunch { namespace Containers {
 
-
-class Tracker
-{
-public:
-    struct Statistics
-    {
-        Statistics() : constructCount(0), destructCount(0) {}
-
-        int constructCount;
-        int destructCount;
-    };
-
-    Tracker(Statistics& statistics, int tag = 0) 
-        : mStatistics(statistics)
-        , mTag(tag)
-    {
-        mStatistics.constructCount++;
-    }
-
-    Tracker(Tracker const& rhs)
-        : mStatistics(rhs.mStatistics)
-        , mTag(rhs.mTag)
-    {
-        mStatistics.constructCount++;
-    }
-
-    Tracker& operator = (Tracker const& rhs)
-    {
-        mStatistics = rhs.mStatistics;
-        mTag = rhs.mTag;
-        return *this;
-    }
-
-    ~Tracker()
-    {
-        mStatistics.destructCount++;
-    }
-
-    int GetTag() const { return mTag; }
-
-private:
-    Statistics& mStatistics;
-    int mTag;
-};
-
 BOOST_AUTO_TEST_SUITE(FixedVectorTests)
 
 BOOST_AUTO_TEST_CASE(DefaultConstructTest)
 {
-    FixedVector<Tracker, 8> v;
+    FixedVector<Tracker, 8> const v;
     BOOST_CHECK(v.empty());
     BOOST_CHECK_EQUAL(v.begin(), v.end());
     BOOST_CHECK_EQUAL(&v[0], v.begin());
@@ -72,8 +28,8 @@ BOOST_AUTO_TEST_CASE(FillConstructTest)
 {
     Tracker::Statistics stats;
     {
-        FixedVector<Tracker, 8> v(3, Tracker(stats, 123));
-        BOOST_CHECK_EQUAL(v.size(), 3);
+        FixedVector<Tracker, 8> const v(3, Tracker(stats, 123));
+        BOOST_CHECK_EQUAL(v.size(), 3u);
         BOOST_CHECK_EQUAL(v[0].GetTag(), 123);
         BOOST_CHECK_EQUAL(v[1].GetTag(), 123);
         BOOST_CHECK_EQUAL(v[2].GetTag(), 123);
@@ -91,8 +47,8 @@ BOOST_AUTO_TEST_CASE(RangeConstructTest)
             Tracker(stats, 2),
             Tracker(stats, 3)
         };
-        FixedVector<Tracker, 8> v(trackers, trackers + 3);
-        BOOST_CHECK_EQUAL(v.size(), 3);
+        FixedVector<Tracker, 8> const v(trackers, trackers + 3);
+        BOOST_CHECK_EQUAL(v.size(), 3u);
         BOOST_CHECK_EQUAL(v[0].GetTag(), 1);
         BOOST_CHECK_EQUAL(v[1].GetTag(), 2);
         BOOST_CHECK_EQUAL(v[2].GetTag(), 3);
@@ -102,6 +58,13 @@ BOOST_AUTO_TEST_CASE(RangeConstructTest)
 
 BOOST_AUTO_TEST_CASE(CopyConstructTest)
 {
+    Tracker::Statistics stats;
+    {
+        FixedVector<Tracker, 8> const v(3, Tracker(stats, 123));
+        FixedVector<Tracker, 8> const v2(v);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin(), v.end(), v2.begin(), v2.end());
+    }
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(MoveConstructTest)
