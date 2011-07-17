@@ -400,6 +400,24 @@ BOOST_AUTO_TEST_CASE(AccessorTest)
 
 BOOST_AUTO_TEST_CASE(SwapTest)
 {
+    Tracker::Statistics stats;
+    {
+        FixedVector<Tracker, 4> v1;
+        FixedVector<Tracker, 4> v2;
+
+        for (int i = 0; i < 4; ++i)
+            v1.push_back(Tracker(stats, i));
+
+        v1.swap(v2);
+
+        BOOST_CHECK(v1.empty());
+        BOOST_CHECK_EQUAL(v2.size(), 4u);
+        BOOST_CHECK_EQUAL(v2[0], Tracker(stats, 0));
+        BOOST_CHECK_EQUAL(v2[1], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v2[2], Tracker(stats, 2));
+        BOOST_CHECK_EQUAL(v2[3], Tracker(stats, 3));
+    }
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

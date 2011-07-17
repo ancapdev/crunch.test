@@ -469,6 +469,12 @@ T* FixedVector<T, S>::erase(T* first, T* last)
 template<typename T, std::size_t S>
 void FixedVector<T, S>::swap(FixedVector<T, S>& rhs)
 {
+    if (this == &rhs)
+        return;
+
+    ThisType temp(std::move(*this));
+    *this = std::move(rhs);
+    rhs = std::move(temp);
 }
 
 template<typename T, std::size_t S>
