@@ -469,6 +469,8 @@ void FixedVector<T, S>::swap(FixedVector<T, S>& rhs)
 template<typename T, std::size_t S>
 void FixedVector<T, S>::clear()
 {
+    Destroy(begin(), end());
+    mSize = 0;
 }
 
 template<typename T, std::size_t S>

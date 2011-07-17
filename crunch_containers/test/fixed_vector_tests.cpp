@@ -291,6 +291,11 @@ BOOST_AUTO_TEST_CASE(RangeEraseTest)
 
 BOOST_AUTO_TEST_CASE(ClearTest)
 {
+    Tracker::Statistics stats;
+    FixedVector<Tracker, 8> v(4, Tracker(stats, 1));
+    v.clear();
+    BOOST_CHECK(v.empty());
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(PushPopTest)
