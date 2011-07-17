@@ -1,7 +1,7 @@
 # Copyright (c) 2011, Christian Rorvik
 # Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
 
-add_library(crunch_containers_lib
+crunch_add_library(crunch_containers_lib
   include/crunch/containers/exception.hpp
   include/crunch/containers/fixed_vector.hpp
   include/crunch/containers/small_vector.hpp
