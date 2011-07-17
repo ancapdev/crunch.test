@@ -144,7 +144,7 @@ template<typename T, std::size_t S>
 FixedVector<T, S>::FixedVector(FixedVector<T, S>&& rhs)
     : mSize(rhs.mSize)
 {
-    move_assign(rhs);
+    move_assign(std::move(rhs));
 }
 
 template<typename T, std::size_t S>
@@ -164,7 +164,7 @@ FixedVector<T, S>& FixedVector<T, S>::operator = (FixedVector<T, S> const& rhs)
 template<typename T, std::size_t S>
 FixedVector<T, S>& FixedVector<T, S>::operator = (FixedVector<T, S>&& rhs)
 {
-    move_assign(rhs);
+    move_assign(std::move(rhs));
     return *this;
 }
 
@@ -309,6 +309,19 @@ void FixedVector<T, S>::assign(typename ThisType::size_type n, T const& value)
     T const valueCopy = value;
     erase(begin(), end());
     insert(begin(), n, valueCopy);
+}
+
+template<typename T, std::size_t S>
+void FixedVector<T, S>::move_assign(ThisType&& rhs)
+{
+    if (this == &rhs)
+        return;
+
+    erase(begin(), end());
+    UninitializedMove(rhs.begin(), rhs.end(), begin());
+    Destroy(rhs.begin(), rhs.end());
+    mSize = rhs.mSize;
+    rhs.mSize = 0;
 }
 
 template<typename T, std::size_t S>

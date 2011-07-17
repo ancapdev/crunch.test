@@ -69,6 +69,17 @@ BOOST_AUTO_TEST_CASE(CopyConstructTest)
 
 BOOST_AUTO_TEST_CASE(MoveConstructTest)
 {
+    Tracker::Statistics stats;
+    {
+        FixedVector<Tracker, 8> v(3, Tracker(stats, 123));
+        FixedVector<Tracker, 8> const v2(std::move(v));
+        BOOST_CHECK(v.empty());
+        BOOST_CHECK_EQUAL(v2.size(), 3);
+        BOOST_CHECK_EQUAL(v2[0].GetTag(), 123);
+        BOOST_CHECK_EQUAL(v2[1].GetTag(), 123);
+        BOOST_CHECK_EQUAL(v2[2].GetTag(), 123);
+    }
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(CopyAssignTest)
