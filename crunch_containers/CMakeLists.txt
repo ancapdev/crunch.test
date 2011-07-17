@@ -14,5 +14,8 @@ add_executable(crunch_containers_test
   test/fixed_vector_tests.cpp
   test/main.cpp
   test/small_vector_tests.cpp)
+
+target_link_libraries(crunch_containers_test
+  crunch_containers_lib)
   
 crunch_add_test(crunch_containers_test)

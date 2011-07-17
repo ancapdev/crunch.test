@@ -342,7 +342,7 @@ template<typename T, std::size_t S>
 void FixedVector<T, S>::pop_back()
 {
     if (!empty())
-        this->GetStorage()[mSize--].~T();
+        this->GetStorage()[--mSize].~T();
 }
 
 template<typename T, std::size_t S>
