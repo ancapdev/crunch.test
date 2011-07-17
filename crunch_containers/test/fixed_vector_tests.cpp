@@ -283,6 +283,32 @@ BOOST_AUTO_TEST_CASE(RangeInsertTest)
 
 BOOST_AUTO_TEST_CASE(ElementEraseTest)
 {
+    Tracker::Statistics stats;
+    FixedVector<Tracker, 4> v;
+    for (int i = 0; i < 4; ++i)
+        v.push_back(Tracker(stats, i));
+
+    // at begin
+    BOOST_CHECK_EQUAL(v.erase(v.begin()), v.begin());
+    BOOST_CHECK_EQUAL(v.size(), 3);
+    BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
+    BOOST_CHECK_EQUAL(v[1], Tracker(stats, 2));
+    BOOST_CHECK_EQUAL(v[2], Tracker(stats, 3));
+
+    // in middle
+    BOOST_CHECK_EQUAL(v.erase(v.begin() + 1), v.begin() + 1);
+    BOOST_CHECK_EQUAL(v.size(), 2);
+    BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
+    BOOST_CHECK_EQUAL(v[1], Tracker(stats, 3));
+    
+    // at end
+    BOOST_CHECK_EQUAL(v.erase(v.begin() + 1), v.begin() + 1);
+    BOOST_CHECK_EQUAL(v.size(), 1);
+    BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
+
+    // last
+    BOOST_CHECK_EQUAL(v.erase(v.begin()), v.begin());
+    BOOST_CHECK(v.empty());
 }
 
 BOOST_AUTO_TEST_CASE(RangeEraseTest)

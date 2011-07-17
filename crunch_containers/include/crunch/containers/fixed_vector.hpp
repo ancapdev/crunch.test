@@ -91,8 +91,8 @@ public:
     void insert(T* where, typename ThisType::size_type n, T const& value);
     template<typename InputIt>
     void insert(T* where, InputIt first, InputIt last);
-    void erase(T* where);
-    void erase(T const* first, T const* last);
+    T* erase(T* where);
+    T* erase(T const* first, T const* last);
     void swap(FixedVector<T, S>& rhs);
     void clear();
 
@@ -448,7 +448,7 @@ void FixedVector<T, S>::insert_impl(T* where, InputIt first, InputIt last, std::
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::erase(T* where)
+T* FixedVector<T, S>::erase(T* where)
 {
     move_down(where + 1, end(), where);
     mSize--;
@@ -457,8 +457,9 @@ void FixedVector<T, S>::erase(T* where)
 }
 
 template<typename T, std::size_t S>
-void FixedVector<T, S>::erase(T const* first, T const* last)
+T* FixedVector<T, S>::erase(T const* first, T const* last)
 {
+    return begin();
 }
 
 template<typename T, std::size_t S>
