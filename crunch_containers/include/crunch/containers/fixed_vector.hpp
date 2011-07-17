@@ -87,7 +87,7 @@ public:
     void push_back(T&& value);
     void pop_back();
     void insert(T* where, T const& value);
-    void insert(T* where, T&& value);
+    // void insert(T* where, T&& value);
     void insert(T* where, typename ThisType::size_type n, T const& value);
     template<typename InputIt>
     void insert(T* where, InputIt first, InputIt last);
@@ -354,11 +354,7 @@ void FixedVector<T, S>::pop_back()
 template<typename T, std::size_t S>
 void FixedVector<T, S>::insert(T* where, T const& value)
 {
-}
-
-template<typename T, std::size_t S>
-void FixedVector<T, S>::insert(T* where, T&& value)
-{
+    insert(where, 1, value);
 }
 
 template<typename T, std::size_t S>

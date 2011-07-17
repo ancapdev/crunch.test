@@ -145,15 +145,42 @@ BOOST_AUTO_TEST_CASE(FillAssignTest)
     BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
-BOOST_AUTO_TEST_CASE(RangeInsertTest)
-{
-}
-
 BOOST_AUTO_TEST_CASE(ElementInsertTest)
 {
+    Tracker::Statistics stats;
+    {
+        FixedVector<Tracker, 8> v;
+        
+        v.insert(v.end(), Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v.size(), 1);
+        BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
+        
+        v.insert(v.end(), Tracker(stats, 2));
+        BOOST_CHECK_EQUAL(v.size(), 2);
+        BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[1], Tracker(stats, 2));
+
+        v.insert(v.begin(), Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v.size(), 3);
+        BOOST_CHECK_EQUAL(v[0], Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v[1], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[2], Tracker(stats, 2));
+
+        v.insert(v.begin() + 1, Tracker(stats, 4));
+        BOOST_CHECK_EQUAL(v.size(), 4);
+        BOOST_CHECK_EQUAL(v[0], Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v[1], Tracker(stats, 4));
+        BOOST_CHECK_EQUAL(v[2], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[3], Tracker(stats, 2));
+    }
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(FillInsertTest)
+{
+}
+
+BOOST_AUTO_TEST_CASE(RangeInsertTest)
 {
 }
 
