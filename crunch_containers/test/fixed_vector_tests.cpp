@@ -180,6 +180,59 @@ BOOST_AUTO_TEST_CASE(ElementInsertTest)
 
 BOOST_AUTO_TEST_CASE(FillInsertTest)
 {
+    Tracker::Statistics stats;
+    {
+        FixedVector<Tracker, 12> v;
+
+        // in empty
+        v.insert(v.begin(), 3, Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v.size(), 3u);
+        BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[1], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[2], Tracker(stats, 1));
+
+        // at end
+        v.insert(v.end(), 3, Tracker(stats, 2));
+        BOOST_CHECK_EQUAL(v.size(), 6u);
+        BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[1], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[2], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[3], Tracker(stats, 2));
+        BOOST_CHECK_EQUAL(v[4], Tracker(stats, 2));
+        BOOST_CHECK_EQUAL(v[5], Tracker(stats, 2));
+
+        // at begin
+        v.insert(v.begin(), 3, Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v.size(), 9u);
+        BOOST_CHECK_EQUAL(v[0], Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v[1], Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v[2], Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v[3], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[4], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[5], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[6], Tracker(stats, 2));
+        BOOST_CHECK_EQUAL(v[7], Tracker(stats, 2));
+        BOOST_CHECK_EQUAL(v[8], Tracker(stats, 2));
+
+        // in middle
+        v.insert(v.begin() + 1, 3, Tracker(stats, 4));
+        BOOST_CHECK_EQUAL(v.size(), 12u);
+        BOOST_CHECK_EQUAL(v[0], Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v[1], Tracker(stats, 4));
+        BOOST_CHECK_EQUAL(v[2], Tracker(stats, 4));
+        BOOST_CHECK_EQUAL(v[3], Tracker(stats, 4));
+        BOOST_CHECK_EQUAL(v[4], Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v[5], Tracker(stats, 3));
+        BOOST_CHECK_EQUAL(v[6], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[7], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[8], Tracker(stats, 1));
+        BOOST_CHECK_EQUAL(v[9], Tracker(stats, 2));
+        BOOST_CHECK_EQUAL(v[10], Tracker(stats, 2));
+        BOOST_CHECK_EQUAL(v[11], Tracker(stats, 2));
+
+        // above capacity
+        BOOST_CHECK_THROW(v.insert(v.end(), 3, Tracker(stats, 5)), std::length_error);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(RangeInsertTest)
