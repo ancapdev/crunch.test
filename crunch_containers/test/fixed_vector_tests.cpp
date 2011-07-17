@@ -71,15 +71,33 @@ BOOST_AUTO_TEST_CASE(DefaultConstructTest)
 BOOST_AUTO_TEST_CASE(FillConstructTest)
 {
     Tracker::Statistics stats;
-    FixedVector<Tracker, 8> v(3, Tracker(stats, 123));
-    BOOST_CHECK_EQUAL(v.size(), 3);
-    BOOST_CHECK_EQUAL(v[0].GetTag(), 123);
-    BOOST_CHECK_EQUAL(v[1].GetTag(), 123);
-    BOOST_CHECK_EQUAL(v[2].GetTag(), 123);
+    {
+        FixedVector<Tracker, 8> v(3, Tracker(stats, 123));
+        BOOST_CHECK_EQUAL(v.size(), 3);
+        BOOST_CHECK_EQUAL(v[0].GetTag(), 123);
+        BOOST_CHECK_EQUAL(v[1].GetTag(), 123);
+        BOOST_CHECK_EQUAL(v[2].GetTag(), 123);
+    }
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(RangeConstructTest)
 {
+    Tracker::Statistics stats;
+    {
+        Tracker trackers[3] =
+        {
+            Tracker(stats, 1),
+            Tracker(stats, 2),
+            Tracker(stats, 3)
+        };
+        FixedVector<Tracker, 8> v(trackers, trackers + 3);
+        BOOST_CHECK_EQUAL(v.size(), 3);
+        BOOST_CHECK_EQUAL(v[0].GetTag(), 1);
+        BOOST_CHECK_EQUAL(v[1].GetTag(), 2);
+        BOOST_CHECK_EQUAL(v[2].GetTag(), 3);
+    }
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(CopyConstructTest)
