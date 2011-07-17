@@ -92,7 +92,7 @@ public:
     template<typename InputIt>
     void insert(T* where, InputIt first, InputIt last);
     T* erase(T* where);
-    T* erase(T const* first, T const* last);
+    T* erase(T* first, T* last);
     void swap(FixedVector<T, S>& rhs);
     void clear();
 
@@ -100,8 +100,6 @@ private:
     // TODO: move utility functions to FixedVectorBase
 
     void move_assign(FixedVector<T, S>&& rhs);
-
-    static void move_down(T* first, T* last, T* where);
 
     template<typename InputIt>
     void insert_impl(T* where, InputIt first, InputIt last, std::input_iterator_tag);
@@ -142,7 +140,7 @@ FixedVector<T, S>::FixedVector(FixedVector<T, S> const& rhs)
 
 template<typename T, std::size_t S>
 FixedVector<T, S>::FixedVector(FixedVector<T, S>&& rhs)
-    : mSize(rhs.mSize)
+    : mSize(0)
 {
     move_assign(std::move(rhs));
 }
@@ -435,7 +433,7 @@ template<typename T, std::size_t S>
 template<typename InputIt>
 void FixedVector<T, S>::insert_impl(T* where, InputIt first, InputIt last, std::forward_iterator_tag)
 {
-    auto const count = std::distance(first, last);
+    auto const count = static_cast<typename ThisType::size_type>(std::distance(first, last));
     if (count == 0)
         return;
 
@@ -450,16 +448,22 @@ void FixedVector<T, S>::insert_impl(T* where, InputIt first, InputIt last, std::
 template<typename T, std::size_t S>
 T* FixedVector<T, S>::erase(T* where)
 {
-    move_down(where + 1, end(), where);
+    Move(where + 1, end(), where);
     mSize--;
     end()->~T();
     return where;
 }
 
 template<typename T, std::size_t S>
-T* FixedVector<T, S>::erase(T const* first, T const* last)
+T* FixedVector<T, S>::erase(T* first, T* last)
 {
-    return begin();
+    if (first == last)
+        return first;
+
+    T* newEnd = Move(last, end(), first);
+    Destroy(newEnd, end());
+    mSize = static_cast<typename ThisType::size_type>(newEnd - begin());
+    return first;
 }
 
 template<typename T, std::size_t S>
@@ -472,13 +476,6 @@ void FixedVector<T, S>::clear()
 {
     Destroy(begin(), end());
     mSize = 0;
-}
-
-template<typename T, std::size_t S>
-void FixedVector<T, S>::move_down(T* first, T* last, T* where)
-{
-    for (; first < last; ++first)
-        *where++ = std::move(*first);
 }
 
 }}

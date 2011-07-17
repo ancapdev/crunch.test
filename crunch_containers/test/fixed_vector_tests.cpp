@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(MoveConstructTest)
         FixedVector<Tracker, 8> v(3, Tracker(stats, 123));
         FixedVector<Tracker, 8> const v2(std::move(v));
         BOOST_CHECK(v.empty());
-        BOOST_CHECK_EQUAL(v2.size(), 3);
+        BOOST_CHECK_EQUAL(v2.size(), 3u);
         BOOST_CHECK_EQUAL(v2[0].GetTag(), 123);
         BOOST_CHECK_EQUAL(v2[1].GetTag(), 123);
         BOOST_CHECK_EQUAL(v2[2].GetTag(), 123);
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(MoveAssignTest)
         FixedVector<Tracker, 8> v2;
         v2 = std::move(v);
         BOOST_CHECK(v.empty());
-        BOOST_CHECK_EQUAL(v2.size(), 3);
+        BOOST_CHECK_EQUAL(v2.size(), 3u);
         BOOST_CHECK_EQUAL(v2[0].GetTag(), 123);
         BOOST_CHECK_EQUAL(v2[1].GetTag(), 123);
         BOOST_CHECK_EQUAL(v2[2].GetTag(), 123);
@@ -152,22 +152,22 @@ BOOST_AUTO_TEST_CASE(ElementInsertTest)
         FixedVector<Tracker, 4> v;
         
         v.insert(v.end(), Tracker(stats, 1));
-        BOOST_CHECK_EQUAL(v.size(), 1);
+        BOOST_CHECK_EQUAL(v.size(), 1u);
         BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
         
         v.insert(v.end(), Tracker(stats, 2));
-        BOOST_CHECK_EQUAL(v.size(), 2);
+        BOOST_CHECK_EQUAL(v.size(), 2u);
         BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
         BOOST_CHECK_EQUAL(v[1], Tracker(stats, 2));
 
         v.insert(v.begin(), Tracker(stats, 3));
-        BOOST_CHECK_EQUAL(v.size(), 3);
+        BOOST_CHECK_EQUAL(v.size(), 3u);
         BOOST_CHECK_EQUAL(v[0], Tracker(stats, 3));
         BOOST_CHECK_EQUAL(v[1], Tracker(stats, 1));
         BOOST_CHECK_EQUAL(v[2], Tracker(stats, 2));
 
         v.insert(v.begin() + 1, Tracker(stats, 4));
-        BOOST_CHECK_EQUAL(v.size(), 4);
+        BOOST_CHECK_EQUAL(v.size(), 4u);
         BOOST_CHECK_EQUAL(v[0], Tracker(stats, 3));
         BOOST_CHECK_EQUAL(v[1], Tracker(stats, 4));
         BOOST_CHECK_EQUAL(v[2], Tracker(stats, 1));
@@ -233,6 +233,7 @@ BOOST_AUTO_TEST_CASE(FillInsertTest)
         // above capacity
         BOOST_CHECK_THROW(v.insert(v.end(), 3, Tracker(stats, 5)), std::length_error);
     }
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(RangeInsertTest)
@@ -290,29 +291,65 @@ BOOST_AUTO_TEST_CASE(ElementEraseTest)
 
     // at begin
     BOOST_CHECK_EQUAL(v.erase(v.begin()), v.begin());
-    BOOST_CHECK_EQUAL(v.size(), 3);
+    BOOST_CHECK_EQUAL(v.size(), 3u);
     BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
     BOOST_CHECK_EQUAL(v[1], Tracker(stats, 2));
     BOOST_CHECK_EQUAL(v[2], Tracker(stats, 3));
 
     // in middle
     BOOST_CHECK_EQUAL(v.erase(v.begin() + 1), v.begin() + 1);
-    BOOST_CHECK_EQUAL(v.size(), 2);
+    BOOST_CHECK_EQUAL(v.size(), 2u);
     BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
     BOOST_CHECK_EQUAL(v[1], Tracker(stats, 3));
     
     // at end
     BOOST_CHECK_EQUAL(v.erase(v.begin() + 1), v.begin() + 1);
-    BOOST_CHECK_EQUAL(v.size(), 1);
+    BOOST_CHECK_EQUAL(v.size(), 1u);
     BOOST_CHECK_EQUAL(v[0], Tracker(stats, 1));
 
     // last
     BOOST_CHECK_EQUAL(v.erase(v.begin()), v.begin());
     BOOST_CHECK(v.empty());
+
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(RangeEraseTest)
 {
+    Tracker::Statistics stats;
+    FixedVector<Tracker, 8> v;
+    for (int i = 0; i < 8; ++i)
+        v.push_back(Tracker(stats, i));
+
+    // at begin
+    BOOST_CHECK_EQUAL(v.erase(v.begin(), v.begin() + 2), v.begin());
+    BOOST_CHECK_EQUAL(v.size(), 6u);
+    BOOST_CHECK_EQUAL(v[0], Tracker(stats, 2));
+    BOOST_CHECK_EQUAL(v[1], Tracker(stats, 3));
+    BOOST_CHECK_EQUAL(v[2], Tracker(stats, 4));
+    BOOST_CHECK_EQUAL(v[3], Tracker(stats, 5));
+    BOOST_CHECK_EQUAL(v[4], Tracker(stats, 6));
+    BOOST_CHECK_EQUAL(v[5], Tracker(stats, 7));
+
+    // in middle
+    BOOST_CHECK_EQUAL(v.erase(v.begin() + 1, v.begin() + 3), v.begin() + 1);
+    BOOST_CHECK_EQUAL(v.size(), 4u);
+    BOOST_CHECK_EQUAL(v[0], Tracker(stats, 2));
+    BOOST_CHECK_EQUAL(v[1], Tracker(stats, 5));
+    BOOST_CHECK_EQUAL(v[2], Tracker(stats, 6));
+    BOOST_CHECK_EQUAL(v[3], Tracker(stats, 7));
+
+    // at end
+    BOOST_CHECK_EQUAL(v.erase(v.begin() + 2, v.end()), v.begin() + 2);
+    BOOST_CHECK_EQUAL(v.size(), 2u);
+    BOOST_CHECK_EQUAL(v[0], Tracker(stats, 2));
+    BOOST_CHECK_EQUAL(v[1], Tracker(stats, 5));
+
+    // last
+    BOOST_CHECK_EQUAL(v.erase(v.begin(), v.end()), v.begin());
+    BOOST_CHECK(v.empty());
+
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(ClearTest)

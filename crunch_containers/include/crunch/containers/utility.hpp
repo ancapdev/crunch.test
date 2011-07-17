@@ -32,6 +32,15 @@ ForwardIt UninitializedMove(InputIt first, InputIt last, ForwardIt dest)
     return current;
 }
 
+template<typename InputIt, typename ForwardIt>
+ForwardIt Move(InputIt first, InputIt last, ForwardIt dest)
+{
+    for (; first != last; ++first, ++dest)
+        *dest = std::move(*first);
+
+    return dest;
+}
+
 template<typename Iterator>
 void Destroy(Iterator first, Iterator last)
 {
