@@ -14,7 +14,7 @@ if(WIN32)
     include/crunch/base/platform/win32/wintypes.hpp)
 endif()
 
-add_library(crunch_base_lib
+crunch_add_library(crunch_base_lib
   include/crunch/base/align.hpp
   include/crunch/base/assert.hpp
   include/crunch/base/bit_utility.hpp
