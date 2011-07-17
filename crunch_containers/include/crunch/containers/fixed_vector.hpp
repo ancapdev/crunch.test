@@ -442,7 +442,7 @@ void FixedVector<T, S>::insert_impl(T* where, InputIt first, InputIt last, std::
     if (max_size() - size() < count)
         ThrowLengthError("FixedVector::insert grew too long");
 
-    std::uninitialized_copy(first, last, begin());
+    std::uninitialized_copy(first, last, end());
     std::rotate(where, end(), end() + count);
     mSize += count;
 }

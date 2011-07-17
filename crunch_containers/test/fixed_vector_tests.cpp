@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(RangeAssignTest)
 {
     Tracker::Statistics stats;
     {
-        Tracker trackers[3] =
+        Tracker const trackers[3] =
         {
             Tracker(stats, 1),
             Tracker(stats, 2),
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(ElementInsertTest)
 {
     Tracker::Statistics stats;
     {
-        FixedVector<Tracker, 8> v;
+        FixedVector<Tracker, 4> v;
         
         v.insert(v.end(), Tracker(stats, 1));
         BOOST_CHECK_EQUAL(v.size(), 1);
@@ -172,6 +172,8 @@ BOOST_AUTO_TEST_CASE(ElementInsertTest)
         BOOST_CHECK_EQUAL(v[1], Tracker(stats, 4));
         BOOST_CHECK_EQUAL(v[2], Tracker(stats, 1));
         BOOST_CHECK_EQUAL(v[3], Tracker(stats, 2));
+
+        BOOST_CHECK_THROW(v.insert(v.end(), Tracker(stats, 5)), std::length_error);
     }
     BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
@@ -182,6 +184,48 @@ BOOST_AUTO_TEST_CASE(FillInsertTest)
 
 BOOST_AUTO_TEST_CASE(RangeInsertTest)
 {
+    Tracker::Statistics stats;
+    {
+        Tracker const trackers[3] =
+        {
+            Tracker(stats, 1),
+            Tracker(stats, 2),
+            Tracker(stats, 3)
+        };
+
+        FixedVector<Tracker, 12> v;
+
+        // in empty
+        v.insert(v.begin(), trackers, trackers + 3);
+        BOOST_CHECK_EQUAL(v.size(), 3u);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin(), v.end(), trackers, trackers + 3);
+
+        // at end
+        v.insert(v.end(), trackers, trackers + 3);
+        BOOST_CHECK_EQUAL(v.size(), 6u);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin(), v.begin() + 3, trackers, trackers + 3);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin() + 3, v.end(), trackers, trackers + 3);
+
+        // at begin
+        v.insert(v.begin(), trackers, trackers + 3);
+        BOOST_CHECK_EQUAL(v.size(), 9u);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin(), v.begin() + 3, trackers, trackers + 3);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin() + 3, v.begin() + 6, trackers, trackers + 3);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin() + 6, v.end(), trackers, trackers + 3);
+
+        // in middle
+        v.insert(v.begin() + 1, trackers, trackers + 3);
+        BOOST_CHECK_EQUAL(v.size(), 12u);
+        BOOST_CHECK_EQUAL(v[0], trackers[0]);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin() + 1, v.begin() + 4, trackers, trackers + 3);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin() + 4, v.begin() + 6, trackers + 1, trackers + 3);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin() + 6, v.begin() + 9, trackers, trackers + 3);
+        BOOST_CHECK_EQUAL_COLLECTIONS(v.begin() + 9, v.end(), trackers, trackers + 3);
+
+        // above capacity
+        BOOST_CHECK_THROW(v.insert(v.end(), trackers, trackers + 3), std::length_error);
+    }
+    BOOST_CHECK_EQUAL(stats.constructCount, stats.destructCount);
 }
 
 BOOST_AUTO_TEST_CASE(ElementEraseTest)
