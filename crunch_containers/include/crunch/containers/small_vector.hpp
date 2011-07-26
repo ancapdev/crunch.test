@@ -8,6 +8,9 @@
 #include "crunch/containers/exception.hpp"
 #include "crunch/containers/utility.hpp"
 
+#include <algorithm>
+#include <memory>
+
 namespace Crunch { namespace Containers {
 
 template<typename T, std::size_t S, typename A = std::allocator<T>>
@@ -118,7 +121,7 @@ private:
 
 template<typename T, std::size_t S, typename A>
 SmallVector<T, S, A>::SmallVector(AllocatorType const& allocator)
-    : mFirst(GetStorage())
+    : mFirst(this->GetStorage())
     , mLast(mFirst)
     , mEnd(mFirst + S)
     , mAllocator(allocator)
@@ -126,7 +129,7 @@ SmallVector<T, S, A>::SmallVector(AllocatorType const& allocator)
 
 template<typename T, std::size_t S, typename A>
 SmallVector<T, S, A>::SmallVector(size_type n, T const& value, AllocatorType const& allocator)
-    : mFirst(GetStorage())
+    : mFirst(this->GetStorage())
     , mLast(mFirst)
     , mEnd(mFirst + S)
     , mAllocator(allocator)
@@ -137,7 +140,7 @@ SmallVector<T, S, A>::SmallVector(size_type n, T const& value, AllocatorType con
 template<typename T, std::size_t S, typename A>
 template<typename InputIt>
 SmallVector<T, S, A>::SmallVector(InputIt first, InputIt last, AllocatorType const& allocator)
-    : mFirst(GetStorage())
+    : mFirst(this->GetStorage())
     , mLast(mFirst)
     , mEnd(mFirst + S)
     , mAllocator(allocator)
@@ -147,7 +150,7 @@ SmallVector<T, S, A>::SmallVector(InputIt first, InputIt last, AllocatorType con
 
 template<typename T, std::size_t S, typename A>
 SmallVector<T, S, A>::SmallVector(SmallVector<T, S, A> const& rhs)
-    : mFirst(GetStorage())
+    : mFirst(this->GetStorage())
     , mLast(mFirst)
     , mEnd(mFirst + S)
     , mAllocator(rhs.mAllocator)
@@ -157,7 +160,7 @@ SmallVector<T, S, A>::SmallVector(SmallVector<T, S, A> const& rhs)
 
 template<typename T, std::size_t S, typename A>
 SmallVector<T, S, A>::SmallVector(SmallVector<T, S, A>&& rhs)
-    : mFirst(GetStorage())
+    : mFirst(this->GetStorage())
     , mLast(mFirst)
     , mEnd(mFirst + S)
     , mAllocator(rhs.mAllocator)
@@ -169,7 +172,7 @@ template<typename T, std::size_t S, typename A>
 SmallVector<T, S, A>::~SmallVector()
 {
     Destroy(begin(), end(), mAllocator);
-    if (mFirst != GetStorage())
+    if (mFirst != this->GetStorage())
         mAllocator.deallocate(mFirst, capacity());
 }
 
@@ -274,7 +277,7 @@ void SmallVector<T, S, A>::reserve(size_type count)
         }
 
         Destroy(begin(), end(), mAllocator);
-        if (mFirst != GetStorage())
+        if (mFirst != this->GetStorage())
             mAllocator.deallocate(mFirst, capacity());
         size_type s = size();
         mFirst = p;
@@ -370,7 +373,7 @@ void SmallVector<T, S, A>::move_assign(ThisType&& rhs)
         return;
 
     clear();
-    if (mFirst != GetStorage())
+    if (mFirst != this->GetStorage())
         mAllocator.deallocate(mFirst, capacity());
 
     if (mAllocator == rhs.mAllocator &&
@@ -484,7 +487,7 @@ void SmallVector<T, S, A>::insert(T* where, size_type n, T const& value)
         }
 
         Destroy(mFirst, mLast, mAllocator);
-        if (mFirst != GetStorage())
+        if (mFirst != this->GetStorage())
             mAllocator.deallocate(mFirst, mEnd - mFirst);
 
         size_type const newSize = size() + n;
@@ -590,7 +593,7 @@ void SmallVector<T, S, A>::insert_impl(T* where, InputIt first, InputIt last, st
         }
 
         Destroy(mFirst, mLast, mAllocator);
-        if (mFirst != GetStorage())
+        if (mFirst != this->GetStorage())
             mAllocator.deallocate(mFirst, mEnd - mFirst);
 
         size_type const newSize = size() + count;
@@ -633,7 +636,7 @@ void SmallVector<T, S, A>::swap(SmallVector<T, S, A>& rhs)
         return;
 
     if (mAllocator == rhs.mAllocator &&
-        mFirst != GetStorage() &&
+        mFirst != this->GetStorage() &&
         rhs.mFirst != rhs.GetStorage())
     {
         std::swap(mFirst, rhs.mFirst);
