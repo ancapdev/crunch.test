@@ -49,6 +49,13 @@ void Destroy(Iterator first, Iterator last)
         (*first).~ValueType();
 }
 
+template<typename Iterator, typename Allocator>
+void Destroy(Iterator first, Iterator last, Allocator& allocator)
+{
+    for (; first != last; ++first)
+        allocator.destroy(first);
+}
+
 }}
 
 #endif

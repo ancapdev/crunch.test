@@ -14,17 +14,6 @@ namespace Crunch { namespace Containers { namespace Detail {
 template<typename T, std::size_t S>
 class FixedVectorBase
 {
-public:
-    typedef T& reference;
-    typedef T const& const_reference;
-    typedef T* iterator;
-    typedef T const* const_iterator;
-    typedef uint32 size_type;
-    typedef std::ptrdiff_t difference_type;
-    typedef T value_type;
-    typedef T* pointer;
-    typedef T const* const_pointer;
-
 protected:
     typedef typename std::aligned_storage<sizeof(T) * S, std::alignment_of<T>::value>::type StorageType;
 
