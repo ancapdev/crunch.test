@@ -131,20 +131,19 @@ public:
         }
     }
 
-    std::vector<IWaitable*> WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
+    WaitForAnyResult WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
     {
         DestroyableWaiter** waiters = CRUNCH_STACK_ALLOC_T(DestroyableWaiter*, count);
 
         for (std::size_t i = 0; i < count; ++i)
         {
-            // waiters[i] = Waiter::Create([&] { mWaitSemaphore.Post(); });
             waiters[i] = DestroyableWaiter::Create(&ContextImpl::PostOnSemaphore, &mWaitSemaphore);
             waitables[i]->AddWaiter(waiters[i]);
         }
 
         mWaitSemaphore.SpinWait(waitMode.spinCount);
 
-        std::vector<IWaitable*> signaled;
+        WaitForAnyResult signaled;
         for (std::size_t i = 0; i < count; ++i)
         {
             if (!waitables[i]->RemoveWaiter(waiters[i]))
@@ -236,7 +235,7 @@ void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode)
     MetaScheduler::tCurrentContext->WaitForAll(waitables, count, waitMode);
 }
 
-std::vector<IWaitable*> WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
+WaitForAnyResult WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
 {
     CRUNCH_ASSERT_MSG(MetaScheduler::tCurrentContext != nullptr, "No context on current thread");
     return MetaScheduler::tCurrentContext->WaitForAny(waitables, count, waitMode);

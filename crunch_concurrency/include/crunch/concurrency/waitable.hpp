@@ -7,8 +7,7 @@
 #include "crunch/concurrency/destroyable_waiter.hpp"
 #include "crunch/concurrency/self_destroying_waiter.hpp"
 #include "crunch/concurrency/wait_mode.hpp"
-
-#include <vector>
+#include "crunch/containers/small_vector.hpp"
 
 namespace Crunch { namespace Concurrency {
 
@@ -39,11 +38,12 @@ struct IWaitable
     virtual ~IWaitable() { }
 };
 
+/// List of signaled waitables
+typedef Containers::SmallVector<IWaitable*, 16> WaitForAnyResult;
+
 void WaitFor(IWaitable& waitable, WaitMode waitMode = WaitMode::Run());
 void WaitForAll(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
-
-///\ return List of signaled waitables
-std::vector<IWaitable*> WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
+WaitForAnyResult WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode = WaitMode::Run());
 
 }}
 

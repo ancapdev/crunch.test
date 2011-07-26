@@ -65,7 +65,8 @@ crunch_add_library(crunch_concurrency_lib
   ${_platformFiles})
 
 target_link_libraries(crunch_concurrency_lib
-  crunch_base_lib)
+  crunch_base_lib
+  crunch_containers_lib)
 
 if(UNIX)
   target_link_libraries(crunch_concurrency_lib

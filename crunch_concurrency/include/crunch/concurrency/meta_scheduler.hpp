@@ -64,7 +64,7 @@ public:
 private:
     friend void WaitFor(IWaitable&, WaitMode);
     friend void WaitForAll(IWaitable**, std::size_t, WaitMode);
-    friend std::vector<IWaitable*> WaitForAny(IWaitable**, std::size_t, WaitMode);
+    friend WaitForAnyResult WaitForAny(IWaitable**, std::size_t, WaitMode);
 
     class MetaThread;
     typedef std::unique_ptr<MetaThread> MetaThreadPtr;
