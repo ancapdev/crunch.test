@@ -10,6 +10,7 @@ if(MSVC)
   add_definitions("-D_WIN32_WINNT=0x0501")
   add_definitions("-DNOMINMAX")
   add_definitions("-Dnoexcept=throw()")
+  add_definitions("-D_SCL_SECURE_NO_WARNINGS")
 
   # Enable parallel compilation
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
@@ -140,7 +141,8 @@ set(PROJECTS
   crunch_base
   crunch_benchmarking
   crunch_concurrency
-  crunch_concurrency_tasks)
+  crunch_concurrency_tasks
+  crunch_containers)
   
 foreach(_p ${PROJECTS})
   include_directories("${CMAKE_SOURCE_DIR}/${_p}/include")
