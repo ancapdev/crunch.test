@@ -68,11 +68,10 @@ bool ProcessorAffinity::IsEmpty() const
 
 uint32 ProcessorAffinity::GetHighestSetProcessor() const
 {
-    for (uint32 i = MaxProcessorId; i <= MaxProcessorId; --i)
+    for (uint32 i = MaxProcessorId; i != 0; --i)
         if (IsSet(i))
             return i;
 
-    // TODO: return optional none
     return 0;
 }
 
