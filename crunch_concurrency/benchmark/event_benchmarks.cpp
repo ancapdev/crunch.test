@@ -7,8 +7,7 @@
 #include "crunch/benchmarking/statistical_profiler.hpp"
 #include "crunch/benchmarking/result_table.hpp"
 
-#include <boost/test/test_tools.hpp>
-#include <boost/test/unit_test_suite.hpp>
+#include "crunch/test/framework.hpp"
 
 namespace Crunch { namespace Concurrency {
 

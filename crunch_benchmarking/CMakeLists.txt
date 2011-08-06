@@ -13,4 +13,5 @@ crunch_add_library(crunch_benchmarking_lib
   source/stream_result_sink.cpp)
   
 target_link_libraries(crunch_benchmarking_lib
-  crunch_base_lib)
+  crunch_base_lib
+  crunch_test_lib)

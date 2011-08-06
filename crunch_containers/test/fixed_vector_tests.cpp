@@ -2,10 +2,8 @@
 // Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
 
 #include "crunch/containers/fixed_vector.hpp"
+#include "crunch/test/framework.hpp"
 #include "./tracker.hpp"
-
-#include <boost/test/test_tools.hpp>
-#include <boost/test/unit_test_suite.hpp>
 
 #include <stdexcept>
 

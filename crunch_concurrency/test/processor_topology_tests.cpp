@@ -2,9 +2,7 @@
 // Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
 
 #include "crunch/concurrency/processor_topology.hpp"
-
-#include <boost/test/test_tools.hpp>
-#include <boost/test/unit_test_suite.hpp>
+#include "crunch/test/framework.hpp"
 
 namespace Crunch { namespace Concurrency {
 

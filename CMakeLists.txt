@@ -43,6 +43,15 @@ if(MSVC)
   # (boost utf) warning C4535: calling _set_se_translator() requires /EHa
   # (boost utf) warning C4702: unreachable code
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4480 /wd4481 /wd4482 /wd4127 /wd4535 /wd4702")
+
+  # Enable static analysis warnings
+  if (${CMAKE_SIZEOF_VOID_P} EQUAL 4)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /analyze")
+    # (boost headers) warning C6326: Potential comparison of a constant with another constant
+    # warning C6334: sizeof operator applied to an expression with an operator might yield unexpected results
+    # warning C6255: _alloca indicates failure by raising a stack overflow exception. Consider using _malloca instead
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd6326 /wd6334 /wd6255")
+  endif()
 else()
   add_definitions("-Dnullptr=__null")
   add_definitions("-Dnoexcept=throw()")
@@ -142,7 +151,8 @@ set(PROJECTS
   crunch_benchmarking
   crunch_concurrency
   crunch_concurrency_tasks
-  crunch_containers)
+  crunch_containers
+  crunch_test)
   
 foreach(_p ${PROJECTS})
   include_directories("${CMAKE_SOURCE_DIR}/${_p}/include")

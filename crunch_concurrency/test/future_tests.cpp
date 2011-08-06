@@ -3,9 +3,7 @@
 
 #include "crunch/concurrency/future.hpp"
 #include "crunch/concurrency/promise.hpp"
-
-#include <boost/test/test_tools.hpp>
-#include <boost/test/unit_test_suite.hpp>
+#include "crunch/test/framework.hpp"
 
 #include <stdexcept>
 

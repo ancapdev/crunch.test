@@ -20,8 +20,9 @@ class Task
 {
 public:
 
+protected:
+    friend class TaskScheduler;
 
-private:
     typedef void (*DispatchFunction)(Task*);
 
     DispatchFunction mDispatcher;
@@ -58,20 +59,37 @@ private:
 };
 
 template<typename F, typename R>
-class TaskImpl : public Task
+class TaskImpl : public Task, Detail::FutureData<R>
 {
+public:
+    TaskImpl(F&& f)
+    {
+        mRefCount.Store(1, MEMORY_ORDER_RELAXED);
+        mDispatcher = &TaskImpl<F, R>::Dispatch;
+        mBarrierCount = 0;
+        mAllocationSize = sizeof(TaskImpl<F, R>);
+        new (&mFunctorStorage) F(f);
+    }
+
     static void Dispatch(Task* task)
     {
+        TaskImpl<F, R>* this_ = static_cast<TaskImpl<F, R>*>(task);
+        F* f = reinterpret_cast<F*>(&this_->mFunctorStorage);
+        this_->Set((*f)());
+        Release(this_);
+    }
+
+    virtual void Destroy() CRUNCH_OVERRIDE
+    {
+        delete this;
     }
 
     typedef typename std::aligned_storage<sizeof(F), std::alignment_of<F>::value>::type FunctorStorageType;
 
-    Detail::FutureData<R> mFutureData;
     FunctorStorageType mFunctorStorage;
-    // EmbeddedWaiter mWaiters[];
 };
 
-// For use when the contination doesn't fit in the original tasks allocation
+// For use when the continuation doesn't fit in the original tasks allocation
 template<typename F, typename R>
 class ContinuationImpl : public Task
 {
@@ -84,7 +102,6 @@ class ContinuationImpl : public Task
 
     Detail::FutureData<R>* mFutureData;
     FunctorStorageType mFunctorStorage;
-    // EmbeddedWaiter mWaiters[];
 };
 
 }}

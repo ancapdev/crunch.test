@@ -39,10 +39,10 @@ crunch_add_library(crunch_base_lib
 
 add_executable(crunch_base_test
   test/intrusive_ptr_tests.cpp
-  test/main.cpp
   test/memory_tests.cpp)
 
 target_link_libraries(crunch_base_test
-  crunch_base_lib)
+  crunch_base_lib
+  crunch_test_lib)
 
 crunch_add_test(crunch_base_test)

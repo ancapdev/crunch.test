@@ -3,10 +3,9 @@
 
 #include "crunch/concurrency/atomic.hpp"
 #include "crunch/base/stdint.hpp"
+#include "crunch/test/framework.hpp"
 
 #include <boost/mpl/list.hpp>
-#include <boost/test/test_tools.hpp>
-#include <boost/test/unit_test_suite.hpp>
 
 namespace Crunch { namespace Concurrency {
 

@@ -4,9 +4,7 @@
 #include "crunch/concurrency/event.hpp"
 #include "crunch/base/override.hpp"
 #include "crunch/base/stdint.hpp"
-
-#include <boost/test/test_tools.hpp>
-#include <boost/test/unit_test_suite.hpp>
+#include "crunch/test/framework.hpp"
 
 namespace Crunch { namespace Concurrency {
 

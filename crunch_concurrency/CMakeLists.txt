@@ -77,7 +77,6 @@ add_executable(crunch_concurrency_test
   test/atomic_tests.cpp
   test/event_tests.cpp
   test/future_tests.cpp
-  test/main.cpp
   test/meta_scheduler_tests.cpp
   test/mutex_tests.cpp
   test/processor_topology_tests.cpp
@@ -86,6 +85,7 @@ add_executable(crunch_concurrency_test
 
 target_link_libraries(crunch_concurrency_test
   crunch_concurrency_lib
+  crunch_test_lib
   ${Boost_LIBRARIES})
 
 crunch_add_test(crunch_concurrency_test)
@@ -93,7 +93,6 @@ crunch_add_test(crunch_concurrency_test)
 add_executable(crunch_concurrency_benchmark
   benchmark/atomic_benchmarks.cpp
   benchmark/event_benchmarks.cpp
-  benchmark/main.cpp
   benchmark/meta_scheduler_benchmarks.cpp)
 
 target_link_libraries(crunch_concurrency_benchmark
