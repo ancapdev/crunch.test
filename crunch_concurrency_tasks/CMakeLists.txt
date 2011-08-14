@@ -10,11 +10,13 @@ crunch_add_library(crunch_concurrency_tasks_lib
 target_link_libraries(crunch_concurrency_tasks_lib
   crunch_concurrency_lib)
 
-add_executable(crunch_concurrency_tasks_test
-  test/task_scheduler_tests.cpp)
-  
-target_link_libraries(crunch_concurrency_tasks_test
-  crunch_concurrency_tasks_lib
-  crunch_test_lib)
-  
-crunch_add_test(crunch_concurrency_tasks_test)
+if (Boost_FOUND)
+  add_executable(crunch_concurrency_tasks_test
+    test/task_scheduler_tests.cpp)
+    
+  target_link_libraries(crunch_concurrency_tasks_test
+    crunch_concurrency_tasks_lib
+    crunch_test_lib)
+    
+  crunch_add_test(crunch_concurrency_tasks_test)
+endif()

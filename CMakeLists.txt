@@ -118,9 +118,10 @@ if(WIN32)
 endif()
 find_package(Boost COMPONENTS thread date_time)
 if(NOT Boost_FOUND)
-  message(FATAL_ERROR "boost not found")
+  message(WARNING "boost not found. Disabling unit tests and benchmarks")
+else()
+  include_directories(${Boost_INCLUDE_DIRS})
 endif()
-include_directories(${Boost_INCLUDE_DIRS})
 
 #
 # tests

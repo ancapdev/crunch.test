@@ -73,30 +73,32 @@ if(UNIX)
     pthread)
 endif()
 
-add_executable(crunch_concurrency_test
-  test/atomic_tests.cpp
-  test/event_tests.cpp
-  test/future_tests.cpp
-  test/meta_scheduler_tests.cpp
-  test/mutex_tests.cpp
-  test/processor_topology_tests.cpp
-  test/semaphore_tests.cpp
-  test/thread_tests.cpp)
+if (Boost_FOUND)
+  add_executable(crunch_concurrency_test
+    test/atomic_tests.cpp
+    test/event_tests.cpp
+    test/future_tests.cpp
+    test/meta_scheduler_tests.cpp
+    test/mutex_tests.cpp
+    test/processor_topology_tests.cpp
+    test/semaphore_tests.cpp
+    test/thread_tests.cpp)
 
-target_link_libraries(crunch_concurrency_test
-  crunch_concurrency_lib
-  crunch_test_lib
-  ${Boost_LIBRARIES})
+  target_link_libraries(crunch_concurrency_test
+    crunch_concurrency_lib
+    crunch_test_lib
+    ${Boost_LIBRARIES})
 
-crunch_add_test(crunch_concurrency_test)
+  crunch_add_test(crunch_concurrency_test)
 
-add_executable(crunch_concurrency_benchmark
-  benchmark/atomic_benchmarks.cpp
-  benchmark/event_benchmarks.cpp
-  benchmark/meta_scheduler_benchmarks.cpp)
+  add_executable(crunch_concurrency_benchmark
+    benchmark/atomic_benchmarks.cpp
+    benchmark/event_benchmarks.cpp
+    benchmark/meta_scheduler_benchmarks.cpp)
 
-target_link_libraries(crunch_concurrency_benchmark
-  crunch_benchmarking_lib
-  crunch_concurrency_lib)
-   
-crunch_add_benchmark(crunch_concurrency_benchmark)
+  target_link_libraries(crunch_concurrency_benchmark
+    crunch_benchmarking_lib
+    crunch_concurrency_lib)
+     
+  crunch_add_benchmark(crunch_concurrency_benchmark)
+endif()
