@@ -37,6 +37,10 @@ crunch_add_library(crunch_base_lib
   source/platform/${PLATFORM_NAME}/high_frequency_timer.cpp
   ${_platformFiles})
 
+if (UNIX)
+  target_link_libraries(crunch_base_lib rt)
+endif()
+
 if (Boost_FOUND)
   add_executable(crunch_base_test
     test/intrusive_ptr_tests.cpp
@@ -48,3 +52,4 @@ if (Boost_FOUND)
 
   crunch_add_test(crunch_base_test)
 endif()
+

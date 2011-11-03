@@ -53,14 +53,11 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd6326 /wd6334 /wd6255")
   endif()
 else()
-  add_definitions("-Dnullptr=__null")
-  add_definitions("-Dnoexcept=throw()")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
   if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
     # Enable cmpxchg16
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcx16")
   endif()
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lrt")
 endif()
 
 #
