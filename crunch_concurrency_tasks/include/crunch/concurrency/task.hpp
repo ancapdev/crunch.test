@@ -59,12 +59,12 @@ protected:
 };
 
 template<typename F, typename R>
-class TaskImpl : public Task, Detail::FutureData<R>
+class TaskImpl : public Task, public Detail::FutureData<R>
 {
 public:
     TaskImpl(F&& f)
     {
-        mRefCount.Store(1, MEMORY_ORDER_RELAXED);
+        Detail::FutureDataBase::mRefCount.Store(1, MEMORY_ORDER_RELAXED);
         mDispatcher = &TaskImpl<F, R>::Dispatch;
         mBarrierCount = 0;
         mAllocationSize = sizeof(TaskImpl<F, R>);

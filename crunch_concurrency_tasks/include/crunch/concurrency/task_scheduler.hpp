@@ -38,7 +38,7 @@ public:
         typedef TaskImpl<F, ResultType> TaskType;
         TaskType* task = new TaskType(std::move(f));
         mTasks.push_back(task);
-        return FutureType(FutureType::DataPtr(task));
+        return FutureType(typename FutureType::DataPtr(task));
     }
 
     void RunAll()

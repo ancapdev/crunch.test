@@ -6,7 +6,6 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
-#include <windows.h>
 namespace Crunch { namespace Concurrency {
 
 BOOST_AUTO_TEST_SUITE(TaskSchedulerTests)
