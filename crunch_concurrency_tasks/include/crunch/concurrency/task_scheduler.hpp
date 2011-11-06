@@ -14,89 +14,106 @@
 
 namespace Crunch { namespace Concurrency {
 
-template<typename R>
-struct UnwrapResultType
-{
-    typedef R Type;
-};
 
-template<typename R>
-struct UnwrapResultType<Future<R>>
-{
-    typedef R Type;
-};
-
-template<typename F>
-struct TaskTraits
-{
-    // MSVC 10 std::result_of is broken
-    typedef decltype((*(F*)(0))()) RawResultType;
-    typedef typename UnwrapResultType<RawResultType>::Type ResultType;
-    typedef Future<ResultType> FutureType;
-    typedef TaskImpl<F, ResultType> TaskType;
-};
-
+// TODO: store continuation size hint thread local per F type 
+//       would enable over-allocation on initial task to avoid further allocations for continuations
+//       only necessary when return type is void or Future<T>, i.e., continuable
 class TaskScheduler : NonCopyable
 {
 public:
-    // Maybe needs to return Task rather than Future in order to provide a richer interface
-    // like cancellation:
-    /*
-    class Task<T>
-    {
-    public:
-        Future<T> GetResult();
-        void Cancel();
-    }
-    */
-    // Cancellation could be provided by passing a cancellation token to the Add() method, without changin the result Future object.
-
     // TaskImpl should be detail
     template<typename F>
-    auto Add (F f) -> typename TaskTraits<F>::FutureType
+    auto Add (F f) -> typename Future<typename TaskTraits<F>::ResultType>
     {
-        typedef typename TaskTraits<F>::FutureType FutureType;
-        typedef typename TaskTraits<F>::TaskType TaskType;
+        Task<F>* task = new Task<F>(*this, std::move(f));
 
-        TaskType* task = new TaskType(std::move(f));
+        // Must get future before adding task to list in case it is stolen, run, and deleted before we return
+        auto future = task->GetFuture();
+
         mTasks.push_back(task);
-        return FutureType(typename FutureType::DataPtr(task));
+
+        return future;
     }
 
     template<typename F>
-    auto Add (F f, IWaitable** dependencies, uint32 dependencyCount) -> typename TaskTraits<F>::FutureType
+    auto Add (F f, IWaitable** dependencies, uint32 dependencyCount) -> Future<typename TaskTraits<F>::ResultType>
     {
-        typedef typename TaskTraits<F>::FutureType FutureType;
-        typedef typename TaskTraits<F>::TaskType TaskType;
+        Task<F>* task = new Task<F>(*this, std::move(f), dependencyCount);
 
-        TaskType* task = new TaskType(std::move(f), dependencyCount);
+        // Must get future before adding waiters in case it becomes ready, is stolen, run, and deleted before we return
+        auto future = task->GetFuture();
 
         for (uint32 i = 0; i < dependencyCount; ++i)
-            dependencies[i]->AddWaiter([=]{ NotifyDependencyReady(task); });
+            dependencies[i]->AddWaiter([=] { task->NotifyDependencyReady(); });
 
-        return FutureType(typename FutureType::DataPtr(task));
+        return future;
     }
 
     void RunAll()
     {
         while (!mTasks.empty())
         {
-            Task* t = mTasks.back();
+            TaskBase* t = mTasks.back();
             mTasks.pop_back();
-            t->mDispatcher(t);
+            t->Dispatch();
         }
     }
 
 private:
-    void NotifyDependencyReady(Task* t)
-    {
-        if (1 == t->mBarrierCount.Decrement())
-            mTasks.push_back(t);
-    }
+    friend class TaskBase;
 
     // Mock up to test interface
-    std::deque<Task*> mTasks;
+    std::deque<TaskBase*> mTasks;
 };
+
+inline void TaskBase::NotifyDependencyReady()
+{
+    if (1 == mBarrierCount.Decrement())
+        mOwner.mTasks.push_back(this);
+}
+
+template<typename F>
+void Task<F>::Dispatch(ResultClassFutureGeneric)
+{
+    Future<ResultType> result = mFunctor();
+
+    // Create continuation dependent on result
+
+    FutureDataType* fd = mFutureData;
+    auto contFunc = [=] {
+        fd->Set(result.Get());
+        Detail::Release(fd);
+    };
+
+    auto contTask = new Task<decltype(contFunc)>(mOwner, std::move(contFunc), 1, 1);
+
+    result.AddWaiter([=] { contTask->NotifyDependencyReady(); });
+
+    delete this;
+}
+
+template<typename F>
+void Task<F>::Dispatch(ResultClassFutureVoid)
+{
+    Future<void> result = mFunctor();
+
+    // Create continuation dependent on result
+
+    Detail::FutureData<void>* fd = mFutureData;
+    auto contFunc = [=] {
+        fd->Set();
+        Detail::Release(fd);
+    };
+
+    // Nothing will be depending on this continuation task, so can take some shortcuts:
+    // - No FutureData
+    auto contTask = new Task<decltype(contFunc)>(mOwner, std::move(contFunc), 1, 1);
+
+    result.AddWaiter([=] { contTask->NotifyDependencyReady(); });
+
+    delete this;
+}
+
 
 }}
 

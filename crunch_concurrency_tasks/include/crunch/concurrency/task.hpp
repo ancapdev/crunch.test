@@ -5,6 +5,7 @@
 #define CRUNCH_CONCURRENCY_TASK_HPP
 
 #include "crunch/base/align.hpp"
+#include "crunch/base/noncopyable.hpp"
 #include "crunch/base/override.hpp"
 #include "crunch/base/stdint.hpp"
 
@@ -15,114 +16,130 @@
 
 namespace Crunch { namespace Concurrency {
 
-
-class Task
+class TaskBase : NonCopyable
 {
+// protected: Some weirdness with access levels through lambdas on MSVC
 public:
-
-protected:
     friend class TaskScheduler;
 
-    typedef void (*DispatchFunction)(Task*);
-
-    Task(uint32 barrierCount)
-        : mBarrierCount(barrierCount, MEMORY_ORDER_RELEASE)
+    TaskBase(TaskScheduler& owner, uint32 barrierCount, uint32 allocationSize)
+        : mOwner(owner)
+        , mBarrierCount(barrierCount, MEMORY_ORDER_RELEASE)
+        , mAllocationSize(allocationSize)
     {}
 
-    DispatchFunction mDispatcher;
+    virtual void Dispatch() = 0;
+
+    void NotifyDependencyReady();
+
+    TaskScheduler& mOwner;
     Atomic<uint32> mBarrierCount;
     uint32 mAllocationSize;
-    
-    /*
-    struct EmbeddedWaiter : Waiter
-    {
-        EmbeddedWaiter(Task* task) : task(task) {}
-
-        virtual void Notify() CRUNCH_OVERRIDE
-        {
-            // Dec barrier and add to scheduler if 0
-        }
-
-        Task* task;
-    };
-
-    struct HeapWaiter : Waiter
-    {
-        HeapWaiter(Task* task) : task(task) {}
-
-        virtual void Notify() CRUNCH_OVERRIDE
-        {
-            // Dec barrier and add to scheduler if 0
-
-            delete this;
-        }
-
-        Task* task;
-    };
-    */
-};
-
-template<typename ResultType, typename ReturnType>
-struct DispatchHelper
-{
-    template<typename F>
-    static void Dispatch(const F& f, Detail::FutureData<ResultType>& fd)
-    {
-        fd.Set(f());
-    }
-};
-
-template<>
-struct DispatchHelper<void, void>
-{
-    template<typename F>
-    static void Dispatch(const F& f, Detail::FutureData<void>& fd)
-    {
-        f();
-        fd.Set();
-    }
 };
 
 template<typename R>
-struct DispatchHelper<R, Future<R>>
+struct UnwrapResultType
 {
-    template<typename F>
-    static void Dispatch(const F& f, Detail::FutureData<R>&)
-    {
-        Future<R> result = f();
-        // Create continuation dependent on result
-    }
+    typedef R Type;
 };
 
-template<typename F, typename R>
-class TaskImpl : public Task, public Detail::FutureData<R>
+template<typename R>
+struct UnwrapResultType<Future<R>>
+{
+    typedef R Type;
+};
+
+template<typename F>
+struct TaskTraits
+{
+    // MSVC 10 std::result_of is broken
+    typedef decltype((*(F*)(0))()) ReturnType;
+    typedef typename UnwrapResultType<ReturnType>::Type ResultType;
+};
+
+struct ResultClassVoid {};
+struct ResultClassGeneric {};
+struct ResultClassFutureGeneric {};
+struct ResultClassFutureVoid {};
+
+template<typename ResultType, typename ReturnType>
+struct ResultClass
+{
+    typedef ResultClassGeneric Type;
+};
+
+template<>
+struct ResultClass<void, void>
+{
+    typedef ResultClassVoid Type;
+};
+
+template<typename R>
+struct ResultClass<R, Future<R>>
+{
+    typedef ResultClassFutureGeneric Type;
+};
+
+template<>
+struct ResultClass<void, Future<void>>
+{
+    typedef ResultClassFutureVoid Type;
+};
+
+template<typename F>
+class Task : public TaskBase
 {
 public:
-    TaskImpl(F&& f, uint32 barrierCount = 0)
-        : Task(barrierCount)
+    typedef typename TaskTraits<F>::ReturnType ReturnType;
+    typedef typename TaskTraits<F>::ResultType ResultType;
+    typedef Future<ResultType> FutureType;
+    typedef typename FutureType::DataType FutureDataType;
+    typedef typename FutureType::DataPtr FutureDataPtr;
+
+    // futureDataRefCount = 2: 1 ref for this, 1 ref for Future return from TaskScheduler::Add
+    Task(TaskScheduler& owner, F&& f, uint32 barrierCount = 0, uint32 futureDataRefCount = 2)
+        : TaskBase(owner, barrierCount, sizeof(Task<F>))
+        , mFutureData(new FutureDataType(futureDataRefCount)) 
+        , mFunctor(std::move(f))
+    {}
+
+    virtual void Dispatch() CRUNCH_OVERRIDE
     {
-        Detail::FutureDataBase::mRefCount.Store(1, MEMORY_ORDER_RELAXED);
-        mDispatcher = &TaskImpl<F, R>::Dispatch;
-        mAllocationSize = sizeof(TaskImpl<F, R>);
-        new (&mFunctorStorage) F(f);
+        Dispatch(typename ResultClass<ResultType, ReturnType>::Type());
     }
 
-    static void Dispatch(Task* task)
+    // Must be called exactly once
+    FutureType GetFuture()
     {
-        TaskImpl<F, R>* this_ = static_cast<TaskImpl<F, R>*>(task);
-        F* f = reinterpret_cast<F*>(&this_->mFunctorStorage);
-        DispatchHelper<R, decltype((*f)())>::Dispatch(*f, *this_);
-        Release(this_);
+        return FutureType(FutureDataPtr(mFutureData, false));
     }
 
-    virtual void Destroy() CRUNCH_OVERRIDE
+private:
+    void Dispatch(ResultClassGeneric)
     {
+        auto result = mFunctor();
+        mFutureData->Set(result);
+        Release(mFutureData);
         delete this;
     }
 
-    typedef typename std::aligned_storage<sizeof(F), std::alignment_of<F>::value>::type FunctorStorageType;
+    void Dispatch(ResultClassVoid)
+    {
+        mFunctor();
+        mFutureData->Set();
+        Release(mFutureData);
+        delete this;
+    }
 
-    FunctorStorageType mFunctorStorage;
+    void Dispatch(ResultClassFutureGeneric);
+
+    void Dispatch(ResultClassFutureVoid);
+
+    // typedef typename std::aligned_storage<sizeof(F), std::alignment_of<F>::value>::type FunctorStorageType;
+
+    FutureDataType* mFutureData;
+    F mFunctor;
+    // FunctorStorageType mFunctorStorage;
 };
 
 /*

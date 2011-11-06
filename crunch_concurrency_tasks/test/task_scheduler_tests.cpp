@@ -7,6 +7,7 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
 
+
 namespace Crunch { namespace Concurrency {
 
 template<typename R>
@@ -81,6 +82,7 @@ BOOST_AUTO_TEST_SUITE(TaskSchedulerTests)
 BOOST_AUTO_TEST_CASE(RemoveMe)
 {
     TaskScheduler scheduler;
+    /*
     Event e;
     IWaitable* dep = &e;
     Future<int> result = scheduler.Add([]{ return 1; }, &dep, 1);
@@ -89,6 +91,12 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
     e.Set();
     scheduler.RunAll();
     BOOST_CHECK_EQUAL(result.Get(), 1);
+    */
+
+    auto a = [] { return 1; };
+    Future<int> continuing = scheduler.Add([&] { return scheduler.Add(a); });
+    scheduler.RunAll();
+    BOOST_CHECK_EQUAL(continuing.Get(), 1);
 
     /*
     int values[100] = {0,};
@@ -98,7 +106,7 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
         });
     });
     scheduler.RunAll();
-    */
+    //*/
 }
 
 BOOST_AUTO_TEST_SUITE_END()
