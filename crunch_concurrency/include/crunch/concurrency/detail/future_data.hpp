@@ -61,6 +61,10 @@ protected:
 
     virtual void Destroy();
 
+#if defined (CRUNCH_PLATFORM_WIN32)
+    __declspec(noreturn) void RethrowException() { std::rethrow_exception(*mException); }
+#endif
+
     Atomic<uint32> mRefCount;
     std::unique_ptr<std::exception_ptr> mException;
 };
@@ -80,6 +84,8 @@ template<typename T>
 class FutureData : public FutureDataBase
 {
 public:
+    typedef T const& GetReturnType;
+
     virtual ~FutureData()
     {
         if (HasValue())
@@ -100,7 +106,7 @@ public:
         Event::Set();
     }
 
-    T& Get()
+    GetReturnType Get()
     {
         Wait();
 
@@ -115,11 +121,7 @@ public:
     }
 
 private:
-#if defined (CRUNCH_PLATFORM_WIN32)
-    __declspec(noreturn) void RethrowException() { std::rethrow_exception(*mException); }
-#endif
-    
-    T& GetValue()
+    GetReturnType GetValue()
     {
         return *static_cast<T*>(ResultAddress());
     }
@@ -131,6 +133,32 @@ private:
     StorageType mResult;
 };
 
+template<>
+class FutureData<void> : public FutureDataBase
+{
+public:
+    typedef void GetReturnType;
+
+    void Set()
+    {
+        CRUNCH_ASSERT(!Event::IsSet());
+        Event::Set();
+    }
+
+    void Get()
+    {
+        Wait();
+
+        if (!mException)
+            return;
+
+#if defined (CRUNCH_PLATFORM_WIN32)
+        RethrowException();
+#else
+        std::rethrow_exception(*mException);
+#endif
+    }
+};
 
 }}}
 

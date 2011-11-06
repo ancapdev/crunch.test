@@ -46,7 +46,7 @@ public:
         return mData->HasException();
     }
 
-    T const& Get() const
+    typename DataType::GetReturnType Get() const
     {
         return mData->Get();
     }
@@ -77,11 +77,6 @@ public:
 private:
 
     DataPtr mData;
-};
-
-template<>
-class Future<void> : public IWaitable
-{
 };
 
 template<typename T>
