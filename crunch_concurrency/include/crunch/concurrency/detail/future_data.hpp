@@ -25,7 +25,7 @@ public:
     using Event::AddWaiter;
     using Event::RemoveWaiter;
 
-    FutureDataBase() : mRefCount(0, MEMORY_ORDER_RELEASE) {}
+    FutureDataBase(uint32 refCount = 0) : mRefCount(refCount, MEMORY_ORDER_RELEASE) {}
 
     void SetException(std::exception_ptr const& exception)
     {
@@ -59,6 +59,7 @@ protected:
     friend void AddRef(FutureDataBase*);
     friend void Release(FutureDataBase*);
 
+    // Destroy rather than just virtual desctructor so we can use custom allocation
     virtual void Destroy();
 
 #if defined (CRUNCH_PLATFORM_WIN32)
@@ -85,6 +86,10 @@ class FutureData : public FutureDataBase
 {
 public:
     typedef T const& GetReturnType;
+
+    FutureData(uint32 refCount = 0)
+        : FutureDataBase(refCount)
+    {}
 
     virtual ~FutureData()
     {
@@ -138,6 +143,10 @@ class FutureData<void> : public FutureDataBase
 {
 public:
     typedef void GetReturnType;
+
+    FutureData(uint32 refCount = 0)
+        : FutureDataBase(refCount)
+    {}
 
     void Set()
     {

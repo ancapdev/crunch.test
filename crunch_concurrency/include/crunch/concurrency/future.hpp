@@ -59,6 +59,8 @@ public:
     //
     // IWaitable
     //
+    using IWaitable::AddWaiter;
+
     virtual void AddWaiter(Waiter* waiter) CRUNCH_OVERRIDE
     {
         mData->AddWaiter(waiter);
