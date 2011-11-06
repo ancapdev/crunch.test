@@ -25,14 +25,7 @@ public:
     template<typename F>
     auto Add (F f) -> typename Future<typename TaskTraits<F>::ResultType>
     {
-        Task<F>* task = new Task<F>(*this, std::move(f));
-
-        // Must get future before adding task to list in case it is stolen, run, and deleted before we return
-        auto future = task->GetFuture();
-
-        mTasks.push_back(task);
-
-        return future;
+        return Add(f, nullptr, 0);
     }
 
     template<typename F>
@@ -43,8 +36,15 @@ public:
         // Must get future before adding waiters in case it becomes ready, is stolen, run, and deleted before we return
         auto future = task->GetFuture();
 
-        for (uint32 i = 0; i < dependencyCount; ++i)
-            dependencies[i]->AddWaiter([=] { task->NotifyDependencyReady(); });
+        if (dependencyCount > 0)
+        {
+            for (uint32 i = 0; i < dependencyCount; ++i)
+                dependencies[i]->AddWaiter([=] { task->NotifyDependencyReady(); });
+        }
+        else
+        {
+            mTasks.push_back(task);
+        }
 
         return future;
     }
