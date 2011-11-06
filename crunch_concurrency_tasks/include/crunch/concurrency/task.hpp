@@ -59,8 +59,7 @@ struct TaskTraits
 
 struct ResultClassVoid {};
 struct ResultClassGeneric {};
-struct ResultClassFutureGeneric {};
-struct ResultClassFutureVoid {};
+struct ResultClassFuture {};
 
 template<typename ResultType, typename ReturnType>
 struct ResultClass
@@ -77,13 +76,7 @@ struct ResultClass<void, void>
 template<typename R>
 struct ResultClass<R, Future<R>>
 {
-    typedef ResultClassFutureGeneric Type;
-};
-
-template<>
-struct ResultClass<void, Future<void>>
-{
-    typedef ResultClassFutureVoid Type;
+    typedef ResultClassFuture Type;
 };
 
 template<typename F>
@@ -96,22 +89,16 @@ public:
     typedef typename FutureType::DataType FutureDataType;
     typedef typename FutureType::DataPtr FutureDataPtr;
 
-    // futureDataRefCount = 2: 1 ref for this, 1 ref for Future return from TaskScheduler::Add
-    Task(TaskScheduler& owner, F&& f, uint32 barrierCount = 0, uint32 futureDataRefCount = 2)
-        : TaskBase(owner, barrierCount, sizeof(Task<F>))
-        , mFutureData(new FutureDataType(futureDataRefCount)) 
+    // futureData must have 1 ref count already added
+    Task(TaskScheduler& owner, F&& f, FutureDataType* futureData, uint32 barrierCount, uint32 allocationSize = sizeof(Task<F>))
+        : TaskBase(owner, barrierCount, allocationSize)
+        , mFutureData(futureData) 
         , mFunctor(std::move(f))
     {}
 
     virtual void Dispatch() CRUNCH_OVERRIDE
     {
         Dispatch(typename ResultClass<ResultType, ReturnType>::Type());
-    }
-
-    // Must be called exactly once
-    FutureType GetFuture()
-    {
-        return FutureType(FutureDataPtr(mFutureData, false));
     }
 
 private:
@@ -131,9 +118,7 @@ private:
         delete this;
     }
 
-    void Dispatch(ResultClassFutureGeneric);
-
-    void Dispatch(ResultClassFutureVoid);
+    void Dispatch(ResultClassFuture);
 
     // typedef typename std::aligned_storage<sizeof(F), std::alignment_of<F>::value>::type FunctorStorageType;
 

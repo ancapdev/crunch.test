@@ -93,16 +93,18 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
     BOOST_CHECK_EQUAL(result.Get(), 1);
     */
 
+    /*
     auto a = [] { return 1; };
     Future<int> continuing = scheduler.Add([&] { return scheduler.Add(a); });
     scheduler.RunAll();
     BOOST_CHECK_EQUAL(continuing.Get(), 1);
+    //*/
 
-    /*
+    //*
     int values[100] = {0,};
     Future<void> work = ParallelFor(scheduler, MakeRange(values, values + 100), [](MyRange<int*> r){
         std::for_each(r.begin, r.end, [](int& x){
-            x = 123;
+            x = reinterpret_cast<int>(&x);
         });
     });
     scheduler.RunAll();
