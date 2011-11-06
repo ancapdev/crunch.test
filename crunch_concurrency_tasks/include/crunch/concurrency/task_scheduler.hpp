@@ -9,15 +9,36 @@
 #include "crunch/concurrency/task.hpp"
 
 #include <deque>
+#include <functional>
 
 namespace Crunch { namespace Concurrency {
 
+template<typename R>
+struct UnwrapResultType
+{
+    typedef R Type;
+};
 
+template<typename R>
+struct UnwrapResultType<Future<R>>
+{
+    typedef R Type;
+};
+
+template<typename F>
+struct TaskTraits
+{
+    // MSVC 10 std::result_of is broken
+    typedef decltype((*(F*)(0))()) RawResultType;
+    typedef typename UnwrapResultType<RawResultType>::Type ResultType;
+    typedef Future<ResultType> FutureType;
+    typedef TaskImpl<F, ResultType> TaskType;
+};
 
 class TaskScheduler
 {
 public:
-    // Maybe needs to return Task rather than Future in order to richer interface
+    // Maybe needs to return Task rather than Future in order to provide a richer interface
     // like cancellation:
     /*
     class Task<T>
@@ -27,18 +48,26 @@ public:
         void Cancel();
     }
     */
+    // Cancellation could be provided by passing a cancellation token to the Add() method, without changin the result Future object.
+
     // TaskImpl should be detail
     template<typename F>
-    auto Add (F f, IWaitable** dependencies, uint32 dependencyCount) -> Future<decltype(f())>
+    auto Add (F f) -> typename TaskTraits<F>::FutureType
     {
-        (void)dependencies;
-        (void)dependencyCount;
-        typedef decltype(f()) ResultType;
-        typedef Future<ResultType> FutureType;
-        typedef TaskImpl<F, ResultType> TaskType;
+        typedef typename TaskTraits<F>::FutureType FutureType;
+        typedef typename TaskTraits<F>::TaskType TaskType;
+
         TaskType* task = new TaskType(std::move(f));
         mTasks.push_back(task);
         return FutureType(typename FutureType::DataPtr(task));
+    }
+
+    template<typename F>
+    auto Add (F f, IWaitable** dependencies, uint32 dependencyCount) -> typename TaskTraits<F>::FutureType
+    {
+        (void)dependencies;
+        (void)dependencyCount;
+        return Add(f);
     }
 
     void RunAll()

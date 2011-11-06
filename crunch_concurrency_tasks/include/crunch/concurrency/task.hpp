@@ -9,7 +9,7 @@
 #include "crunch/base/stdint.hpp"
 
 #include "crunch/concurrency/waitable.hpp"
-#include "crunch/concurrency/detail/future_data.hpp"
+#include "crunch/concurrency/future.hpp"
 
 #include <type_traits>
 
@@ -58,6 +58,39 @@ protected:
     */
 };
 
+template<typename ResultType, typename ReturnType>
+struct DispatchHelper
+{
+    template<typename F>
+    static void Dispatch(const F& f, Detail::FutureData<ResultType>& fd)
+    {
+        fd.Set(f());
+    }
+};
+
+template<>
+struct DispatchHelper<void, void>
+{
+    template<typename F>
+    static void Dispatch(const F& f, Detail::FutureData<void>& fd)
+    {
+        // TODO: Simply because result type is void doesn't mean return type from f() is void.. it could be Future<void> for a continuation
+        f();
+        fd.Set();
+    }
+};
+
+template<typename R>
+struct DispatchHelper<R, Future<R>>
+{
+    template<typename F>
+    static void Dispatch(const F& f, Detail::FutureData<R>&)
+    {
+        Future<R> result = f();
+        // Create continuation dependent on result
+    }
+};
+
 template<typename F, typename R>
 class TaskImpl : public Task, public Detail::FutureData<R>
 {
@@ -75,7 +108,7 @@ public:
     {
         TaskImpl<F, R>* this_ = static_cast<TaskImpl<F, R>*>(task);
         F* f = reinterpret_cast<F*>(&this_->mFunctorStorage);
-        this_->Set((*f)());
+        DispatchHelper<R, decltype((*f)())>::Dispatch(*f, *this_);
         Release(this_);
     }
 
