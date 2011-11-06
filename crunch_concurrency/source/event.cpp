@@ -83,14 +83,4 @@ void Event::Set()
     }
 }
 
-void Event::Reset()
-{
-    mWaiters.And(~EVENT_SET_BIT);
-}
-
-bool Event::IsSet() const
-{
-    return (mWaiters.Load(MEMORY_ORDER_RELAXED) & EVENT_SET_BIT) != 0;
-}
-
 }}
