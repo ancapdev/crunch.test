@@ -12,7 +12,6 @@ endif()
     
 crunch_add_library(crunch_concurrency_lib
   include/crunch/concurrency/atomic.hpp
-  include/crunch/concurrency/destroyable_waiter.hpp
   include/crunch/concurrency/event.hpp
   include/crunch/concurrency/exceptions.hpp
   include/crunch/concurrency/fence.hpp
@@ -25,7 +24,6 @@ crunch_add_library(crunch_concurrency_lib
   include/crunch/concurrency/processor_affinity.hpp
   include/crunch/concurrency/processor_topology.hpp
   include/crunch/concurrency/promise.hpp
-  include/crunch/concurrency/self_destroying_waiter.hpp
   include/crunch/concurrency/semaphore.hpp
   include/crunch/concurrency/scheduler.hpp
   include/crunch/concurrency/thread.hpp

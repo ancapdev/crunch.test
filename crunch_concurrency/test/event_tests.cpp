@@ -51,14 +51,7 @@ BOOST_AUTO_TEST_CASE(AddWaiterToUnsetTest)
     Event e(false);
     volatile uint32 wakeupCount = 0;
 
-    struct CountIncrementer
-    {
-        static void Increment(void* count)
-        {
-            (*reinterpret_cast<uint32*>(count))++;
-        }
-    };
-    DestroyableWaiter* waiter = DestroyableWaiter::Create(&CountIncrementer::Increment, &wakeupCount);
+    auto waiter = Waiter::Create([&] { wakeupCount++; }, false);
 
     // Add waiter to unset event.
     e.AddWaiter(waiter);

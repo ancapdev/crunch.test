@@ -55,15 +55,7 @@ BOOST_AUTO_TEST_CASE(RemoveWaiterTest)
     volatile bool acquired1 = false;
     volatile bool acquired2 = false;
 
-    struct SetAcquired
-    {
-        static void Do(void* flag)
-        {
-            *reinterpret_cast<bool*>(flag) = true;
-        }
-    };
-
-    DestroyableWaiter* waiter = DestroyableWaiter::Create(&SetAcquired::Do, &acquired2);
+    auto waiter = Waiter::Create([&] { acquired2 = true; }, false);
     m.AddWaiter([&] { acquired1 = true; });
     m.AddWaiter(waiter);
     BOOST_CHECK(acquired1);

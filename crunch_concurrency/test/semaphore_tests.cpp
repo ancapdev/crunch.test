@@ -38,13 +38,7 @@ BOOST_AUTO_TEST_CASE(PostThenWaitTest)
 BOOST_AUTO_TEST_CASE(RemoveWaitFromEmptyTest)
 {
     Semaphore s(0);
-    
-    struct WaitHelper
-    {
-        static void Do(void*) {}
-    };
-
-    DestroyableWaiter* waiter = DestroyableWaiter::Create(&WaitHelper::Do, nullptr);
+    auto waiter = Waiter::Create([]{}, false);
     BOOST_CHECK(!s.RemoveWaiter(waiter));
     waiter->Destroy();
 }
@@ -52,13 +46,7 @@ BOOST_AUTO_TEST_CASE(RemoveWaitFromEmptyTest)
 BOOST_AUTO_TEST_CASE(RemoveWaiterTest)
 {
     Semaphore s(0);
-
-    struct WaitHelper
-    {
-        static void Do(void*) {}
-    };
-
-    DestroyableWaiter* waiter = DestroyableWaiter::Create(&WaitHelper::Do, nullptr);
+    auto waiter = Waiter::Create([]{}, false);
     s.AddWaiter(waiter);
     BOOST_CHECK(s.RemoveWaiter(waiter));
     waiter->Destroy();

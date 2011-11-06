@@ -13,8 +13,6 @@ namespace Crunch { namespace Concurrency {
 
 BOOST_AUTO_TEST_SUITE(EventBenchmarks)
 
-void NullFunc(void*) {}
-
 BOOST_AUTO_TEST_CASE(RemoveMe)
 {
     using namespace Benchmarking;
@@ -33,9 +31,10 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
     Event event;
 
     int const maxCount = 10;
-    DestroyableWaiter* waiters[maxCount];
+    auto nullFunc = []{};
+    Waiter::Typed<decltype(nullFunc)>* waiters[maxCount];
     for (int i = 0; i < maxCount; ++i)
-        waiters[i] = DestroyableWaiter::Create(&NullFunc, 0);
+        waiters[i] = Waiter::Create(nullFunc, false);
 
     int const reps = 100;
     for (int32 count = 1; count < maxCount; ++count)

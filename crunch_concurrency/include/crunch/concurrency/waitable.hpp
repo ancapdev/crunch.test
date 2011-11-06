@@ -4,8 +4,7 @@
 #ifndef CRUNCH_CONCURRENCY_WAITABLE_HPP
 #define CRUNCH_CONCURRENCY_WAITABLE_HPP
 
-#include "crunch/concurrency/destroyable_waiter.hpp"
-#include "crunch/concurrency/self_destroying_waiter.hpp"
+#include "crunch/concurrency/waiter.hpp"
 #include "crunch/concurrency/wait_mode.hpp"
 #include "crunch/containers/small_vector.hpp"
 
@@ -16,15 +15,11 @@ struct IWaitable
     template<typename F>
     void AddWaiter(F callback)
     {
-        AddWaiter(SelfDestroyingWaiter::Create(callback));
+        AddWaiter(Waiter::Create(callback, true));
     }
 
-    void AddWaiter(DestroyableWaiter* waiter)
-    {
-        AddWaiter(static_cast<Waiter*>(waiter));
-    }
-
-    void AddWaiter(SelfDestroyingWaiter* waiter)
+    template<typename F>
+    void AddWaiter(Waiter::Typed<F>* waiter)
     {
         AddWaiter(static_cast<Waiter*>(waiter));
     }

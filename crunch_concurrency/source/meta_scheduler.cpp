@@ -24,17 +24,14 @@ public:
         , mWaitSemaphore(0)
         , mRefCount(1)
     {
-        mWaiter = DestroyableWaiter::Create(&ContextImpl::PostOnSemaphore, &mWaitSemaphore);
-    }
-
-    static void PostOnSemaphore(void* semaphore)
-    {
-        reinterpret_cast<Detail::SystemSemaphore*>(semaphore)->Post();
+        auto waiter = Waiter::Create([&] { mWaitSemaphore.Post(); }, false);
+        mWaiterDestroyer = [=] { waiter->Destroy(); };
+        mWaiter = waiter;
     }
 
     ~ContextImpl()
     {
-        mWaiter->Destroy();
+        mWaiterDestroyer();
     }
 
     MetaScheduler* GetOwner()
@@ -133,11 +130,14 @@ public:
 
     WaitForAnyResult WaitForAny(IWaitable** waitables, std::size_t count, WaitMode waitMode)
     {
-        DestroyableWaiter** waiters = CRUNCH_STACK_ALLOC_T(DestroyableWaiter*, count);
+        auto poster = [&] { mWaitSemaphore.Post(); };
+        typedef Waiter::Typed<decltype(poster)> WaiterType;
+
+        WaiterType** waiters = CRUNCH_STACK_ALLOC_T(WaiterType*, count);
 
         for (std::size_t i = 0; i < count; ++i)
         {
-            waiters[i] = DestroyableWaiter::Create(&ContextImpl::PostOnSemaphore, &mWaitSemaphore);
+            waiters[i] = Waiter::Create(poster, false);
             waitables[i]->AddWaiter(waiters[i]);
         }
 
@@ -166,7 +166,8 @@ private:
     MetaScheduler* mOwner;
     uint32 mRefCount;
     Detail::SystemSemaphore mWaitSemaphore;
-    DestroyableWaiter* mWaiter;
+    Waiter* mWaiter;
+    std::function<void ()> mWaiterDestroyer;
 };
 
 void MetaScheduler::Context::Run(IWaitable& until)
