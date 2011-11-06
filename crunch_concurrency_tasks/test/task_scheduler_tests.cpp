@@ -81,10 +81,16 @@ BOOST_AUTO_TEST_SUITE(TaskSchedulerTests)
 BOOST_AUTO_TEST_CASE(RemoveMe)
 {
     TaskScheduler scheduler;
-    Future<int> result = scheduler.Add([]{ return 1; }, nullptr, 0);
+    Event e;
+    IWaitable* dep = &e;
+    Future<int> result = scheduler.Add([]{ return 1; }, &dep, 1);
+    scheduler.RunAll();
+    BOOST_CHECK(!result.IsReady());
+    e.Set();
     scheduler.RunAll();
     BOOST_CHECK_EQUAL(result.Get(), 1);
 
+    /*
     int values[100] = {0,};
     Future<void> work = ParallelFor(scheduler, MakeRange(values, values + 100), [](MyRange<int*> r){
         std::for_each(r.begin, r.end, [](int& x){
@@ -92,6 +98,7 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
         });
     });
     scheduler.RunAll();
+    */
 }
 
 BOOST_AUTO_TEST_SUITE_END()

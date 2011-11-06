@@ -25,8 +25,12 @@ protected:
 
     typedef void (*DispatchFunction)(Task*);
 
+    Task(uint32 barrierCount)
+        : mBarrierCount(barrierCount, MEMORY_ORDER_RELEASE)
+    {}
+
     DispatchFunction mDispatcher;
-    uint32 mBarrierCount;
+    Atomic<uint32> mBarrierCount;
     uint32 mAllocationSize;
     
     /*
@@ -74,7 +78,6 @@ struct DispatchHelper<void, void>
     template<typename F>
     static void Dispatch(const F& f, Detail::FutureData<void>& fd)
     {
-        // TODO: Simply because result type is void doesn't mean return type from f() is void.. it could be Future<void> for a continuation
         f();
         fd.Set();
     }
@@ -95,11 +98,11 @@ template<typename F, typename R>
 class TaskImpl : public Task, public Detail::FutureData<R>
 {
 public:
-    TaskImpl(F&& f)
+    TaskImpl(F&& f, uint32 barrierCount = 0)
+        : Task(barrierCount)
     {
         Detail::FutureDataBase::mRefCount.Store(1, MEMORY_ORDER_RELAXED);
         mDispatcher = &TaskImpl<F, R>::Dispatch;
-        mBarrierCount = 0;
         mAllocationSize = sizeof(TaskImpl<F, R>);
         new (&mFunctorStorage) F(f);
     }
@@ -122,6 +125,7 @@ public:
     FunctorStorageType mFunctorStorage;
 };
 
+/*
 // For use when the continuation doesn't fit in the original tasks allocation
 template<typename F, typename R>
 class ContinuationImpl : public Task
@@ -136,6 +140,7 @@ class ContinuationImpl : public Task
     Detail::FutureData<R>* mFutureData;
     FunctorStorageType mFunctorStorage;
 };
+*/
 
 }}
 

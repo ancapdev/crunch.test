@@ -5,6 +5,7 @@
 #define CRUNCH_CONCURRENCY_TASK_SCHEDULER_HPP
 
 #include "crunch/base/stdint.hpp"
+#include "crunch/base/noncopyable.hpp"
 #include "crunch/concurrency/future.hpp"
 #include "crunch/concurrency/task.hpp"
 
@@ -35,7 +36,7 @@ struct TaskTraits
     typedef TaskImpl<F, ResultType> TaskType;
 };
 
-class TaskScheduler
+class TaskScheduler : NonCopyable
 {
 public:
     // Maybe needs to return Task rather than Future in order to provide a richer interface
@@ -65,21 +66,34 @@ public:
     template<typename F>
     auto Add (F f, IWaitable** dependencies, uint32 dependencyCount) -> typename TaskTraits<F>::FutureType
     {
-        (void)dependencies;
-        (void)dependencyCount;
-        return Add(f);
+        typedef typename TaskTraits<F>::FutureType FutureType;
+        typedef typename TaskTraits<F>::TaskType TaskType;
+
+        TaskType* task = new TaskType(std::move(f), dependencyCount);
+
+        for (uint32 i = 0; i < dependencyCount; ++i)
+            dependencies[i]->AddWaiter([=]{ NotifyDependencyReady(task); });
+
+        return FutureType(typename FutureType::DataPtr(task));
     }
 
     void RunAll()
     {
         while (!mTasks.empty())
         {
-            mTasks.back()->mDispatcher(mTasks.back());
+            Task* t = mTasks.back();
             mTasks.pop_back();
+            t->mDispatcher(t);
         }
     }
 
 private:
+    void NotifyDependencyReady(Task* t)
+    {
+        if (1 == t->mBarrierCount.Decrement())
+            mTasks.push_back(t);
+    }
+
     // Mock up to test interface
     std::deque<Task*> mTasks;
 };
