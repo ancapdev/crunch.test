@@ -81,6 +81,7 @@ void Task<F>::Dispatch(ResultClassFuture)
 
     // Create continuation dependent on the completion of the returned Future
     auto futureData = mFutureData;
+    uint32 const allocSize = mAllocationSize;
     TaskScheduler& owner = mOwner;
 
     // Get value from result
@@ -88,18 +89,18 @@ void Task<F>::Dispatch(ResultClassFuture)
     typedef Task<decltype(contFunc)> ContTaskType;
 
     ContTaskType* contTask;
-    if (sizeof(Task<F>) < sizeof(ContTaskType))
+    // TODO: statically guarantee sufficient space for continuation in any task returning a Future<T>
+    if (sizeof(Task<F>) >= sizeof(ContTaskType) || allocSize >= sizeof(ContTaskType))
+    {
+        // Reuse current allocation
+        this->~Task<F>();
+        contTask = new (this) ContTaskType(owner, std::move(contFunc), futureData, 1, allocSize);
+    }
+    else
     {
         // Create new allocation
         delete this;
         contTask = new ContTaskType(owner, std::move(contFunc), futureData, 1);
-    }
-    else
-    {
-        // Reuse current allocation
-        uint32 const allocSize = mAllocationSize;
-        this->~Task<F>();
-        contTask = new (this) ContTaskType(owner, std::move(contFunc), futureData, 1, allocSize);
     }
 
     result.AddWaiter([=] { contTask->NotifyDependencyReady(); });
