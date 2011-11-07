@@ -15,6 +15,8 @@
 
 #include <deque>
 #include <functional>
+#include <memory>
+#include <vector>
 
 namespace Crunch { namespace Concurrency {
 
@@ -38,6 +40,7 @@ private:
 class TaskScheduler : NonCopyable
 {
 public:
+    // TODO: On destruction, orphan tasks
     class Context : NonCopyable
     {
     public:
@@ -79,6 +82,8 @@ public:
 
         TaskScheduler& mOwner;
         WorkStealingTaskQueue mTasks;
+        int mConfigurationVersion;
+        std::vector<std::shared_ptr<Context>> mNeighbours;
     };
 
     TaskScheduler();
@@ -110,15 +115,22 @@ private:
 
     void AddTask(TaskBase* task);
 
+
+    // Contexts cache configuration locally and poll mConfigurationVersion for changes
+    Detail::SystemMutex mConfigurationMutex;
+    volatile int mConfigurationVersion;
+    std::vector<std::shared_ptr<Context>> mContexts;
+
     // TODO: Need to lock around shared context
     // TODO: Might be better of with a more specialized queue instead of a shared context
     Context mSharedContext;
+
     static CRUNCH_THREAD_LOCAL Context* tContext;
 };
 
 inline void TaskScheduler::AddTask(TaskBase* task)
 {
-    if (tContext)
+    if (tContext && &tContext->mOwner == this)
         tContext->mTasks.PushBack(task);
     else
         mSharedContext.mTasks.PushBack(task);
