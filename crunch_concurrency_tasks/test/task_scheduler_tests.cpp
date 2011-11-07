@@ -82,6 +82,7 @@ BOOST_AUTO_TEST_SUITE(TaskSchedulerTests)
 BOOST_AUTO_TEST_CASE(RemoveMe)
 {
     TaskScheduler scheduler;
+    scheduler.Enter();
     /*
     Event e;
     IWaitable* dep = &e;
@@ -107,8 +108,10 @@ BOOST_AUTO_TEST_CASE(RemoveMe)
             x = reinterpret_cast<int>(&x);
         });
     });
-    scheduler.RunAll();
+    scheduler.Run();
     //*/
+
+    scheduler.Leave();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
