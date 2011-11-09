@@ -77,6 +77,8 @@ public:
 
         void RunAll();
 
+        void RunUntil(IWaitable& waitable);
+
     private:
         friend class TaskScheduler;
 
@@ -109,6 +111,7 @@ public:
     void Enter();
     void Leave();
     void Run();
+    void RunUntil(IWaitable& waitable);
 
 private:
     friend class TaskBase;
