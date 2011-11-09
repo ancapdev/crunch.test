@@ -106,8 +106,8 @@ BOOST_AUTO_TEST_SUITE(TaskSchedulerTests)
 
 BOOST_AUTO_TEST_CASE(RemoveMe)
 {
-    MetaScheduler::SchedulerList schedulers;
-    MetaScheduler metaScheduler(schedulers);
+    MetaScheduler::Configuration configuration;
+    MetaScheduler metaScheduler(configuration);
     MetaScheduler::Context& metaSchedulerContext = metaScheduler.AcquireContext();
 
     TaskScheduler scheduler;

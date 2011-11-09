@@ -16,7 +16,7 @@
 
 namespace Crunch { namespace Concurrency {
 
-// Very simple scheduler to run multiple cooperative schedulers. E.g.,
+// Very simple scheduler to manage processing resources and run multiple cooperative schedulers. E.g.,
 // - task scheduler
 // - io_service scheduler
 // - fiber / coroutine scheduler
@@ -24,10 +24,52 @@ namespace Crunch { namespace Concurrency {
 class MetaScheduler
 {
 public:
+    class RunMode
+    {
+    public:
+        static RunMode Disabled();
+        static RunMode Some(uint32 count);
+        static RunMode TimedMicroseconds(uint32 count);
+        static RunMode All();
+
+    private:
+        enum Type
+        {
+            TYPE_DISABLED,
+            TYPE_SOME,
+            TYPE_TIMED,
+            TYPE_ALL
+        };
+
+        RunMode(Type type, uint32 parameter);
+
+        Type mType;
+        uint32 mParameter;
+    };
+
     typedef std::shared_ptr<IScheduler> SchedulerPtr;
     typedef std::vector<SchedulerPtr> SchedulerList;
 
-    MetaScheduler(SchedulerList const& schedulers);
+    class Configuration
+    {
+    public:
+        void AddGroup(uint32 id, RunMode defaultRunMode);
+        void AddScheduler(uint32 groupId, SchedulerPtr const& scheduler);
+
+    private:
+        struct Group
+        {
+            Group(uint32 id, RunMode defaultRunMode);
+
+            uint32 id;
+            RunMode defaultRunMode;
+            std::vector<SchedulerPtr> schedulers;
+        };
+
+        std::vector<Group> mGroups;
+    };
+
+    MetaScheduler(Configuration const& configuration);
     ~MetaScheduler();
 
     class MetaThreadConfig
@@ -74,8 +116,7 @@ private:
     typedef std::unique_ptr<ContextImpl> ContextPtr;
     typedef std::vector<ContextPtr> ContextList;
 
-    SchedulerList mSchedulers;
-    Detail::SystemMutex mSchedulersLock;
+    Configuration mConfiguration;
 
     MetaThreadList mIdleMetaThreads;
     Detail::SystemMutex mMetaThreadsLock;

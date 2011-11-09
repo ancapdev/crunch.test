@@ -16,6 +16,49 @@
 
 namespace Crunch { namespace Concurrency {
 
+MetaScheduler::RunMode::RunMode(Type type, uint32 parameter)
+    : mType(type)
+    , mParameter(parameter)
+{ }
+
+MetaScheduler::RunMode MetaScheduler::RunMode::Disabled()
+{
+    return RunMode(TYPE_DISABLED, 0);
+}
+
+MetaScheduler::RunMode MetaScheduler::RunMode::Some(uint32 count)
+{
+    return RunMode(TYPE_SOME, count);
+}
+
+MetaScheduler::RunMode MetaScheduler::RunMode::TimedMicroseconds(uint32 count)
+{
+    return RunMode(TYPE_TIMED, count);
+}
+
+MetaScheduler::RunMode MetaScheduler::RunMode::All()
+{
+    return RunMode(TYPE_ALL, 0);
+}
+
+MetaScheduler::Configuration::Group::Group(uint32 id, RunMode defaultRunMode)
+    : id(id)
+    , defaultRunMode(defaultRunMode)
+{}
+
+void MetaScheduler::Configuration::AddGroup(uint32 id, RunMode defaultRunMode)
+{
+    CRUNCH_ASSERT_MSG_ALWAYS(std::find_if(mGroups.begin(), mGroups.end(), [=] (Group const& group) { return group.id == id; }) == mGroups.end(), "Scheduler group already exists");
+    mGroups.push_back(Group(id, defaultRunMode));
+}
+
+void MetaScheduler::Configuration::AddScheduler(uint32 groupId, SchedulerPtr const& scheduler)
+{
+    auto it = std::find_if(mGroups.begin(), mGroups.end(), [=] (Group const& group) { return group.id == groupId; });
+    CRUNCH_ASSERT_MSG_ALWAYS(it != mGroups.end(), "Invalid scheduler group");
+    it->schedulers.push_back(scheduler);
+}
+
 class MetaScheduler::ContextImpl : public MetaScheduler::Context, NonCopyable
 {
 public:
@@ -193,8 +236,8 @@ private:
     MetaThreadConfig mConfig;
 };
 
-MetaScheduler::MetaScheduler(const SchedulerList& schedulers)
-    : mSchedulers(schedulers)
+MetaScheduler::MetaScheduler(const Configuration& configuration)
+    : mConfiguration(configuration)
 {}
 
 MetaScheduler::~MetaScheduler()
