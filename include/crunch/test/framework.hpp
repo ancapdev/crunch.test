@@ -6,6 +6,7 @@
 
 #if defined (_MSC_VER)
 #   pragma warning (push)
+#   pragma warning (disable : 6011) // dereferencing NULL pointer
 #   pragma warning (disable : 6326)
 #endif
 
