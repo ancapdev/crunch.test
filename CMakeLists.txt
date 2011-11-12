@@ -3,8 +3,6 @@
 
 include(configure.cmake)
 
-vpm_add_dependencies(boost)
-
-add_library(crunch_test_lib
+vpm_add_library(crunch_test_lib
   include/crunch/test/framework.hpp
   source/main.cpp)
