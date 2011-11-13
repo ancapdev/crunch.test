@@ -5,7 +5,7 @@ vpm_depend(boost)
 
 add_definitions(-DBOOST_TEST_ALTERNATIVE_INIT_API)
 
-include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
+vpm_include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 
 macro(crunch_add_test _name)
   add_custom_target("run-${_name}"
