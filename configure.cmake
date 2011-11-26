@@ -1,6 +1,7 @@
 # Copyright (c) 2011, Christian Rorvik
 # Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
 
+vpm_set_default_version(boost proxy)
 vpm_depend(boost)
 
 add_definitions(-DBOOST_TEST_ALTERNATIVE_INIT_API)
