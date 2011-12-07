@@ -4,8 +4,6 @@
 vpm_set_default_version(boost proxy)
 vpm_depend(boost)
 
-add_definitions(-DBOOST_TEST_ALTERNATIVE_INIT_API)
-
 vpm_include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 
 macro(crunch_add_test _name)

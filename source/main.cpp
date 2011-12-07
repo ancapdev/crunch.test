@@ -26,9 +26,5 @@
 #   pragma warning (disable : 6328)
 #endif
 
-#include <boost/test/included/unit_test.hpp>
-
-bool init_unit_test()
-{
-    return true;
-}
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
