@@ -6,11 +6,11 @@ include(configure.cmake)
 # Create 2 libraries to move the boost test library before crunch_test_lib_ 
 # in the link order. Dependent tests should link with crunch_test_lib
 
-vpm_add_library(crunch_test_lib_
+VPM_add_library(crunch_test_lib_ STATIC
   include/crunch/test/framework.hpp
   source/main.cpp)
 
-vpm_add_library(crunch_test_lib
+vpm_add_library(crunch_test_lib STATIC
   source/dummy.cpp)
 
 target_link_libraries(crunch_test_lib
