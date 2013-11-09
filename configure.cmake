@@ -7,7 +7,21 @@ vpm_depend(boost)
 
 vpm_include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 
+set(CRUNCH_TEST_DIR ${CMAKE_CURRENT_LIST_DIR})
+
+if(NOT Boost_USE_STATIC_LIBS)
+  add_definitions("-DBOOST_TEST_DYN_LINK")
+endif()
+
 macro(crunch_add_test _name)
+  # Add test executable, with main function defined by the boost unit testing framework
+  add_executable(${_name}
+    ${ARGN}
+    ${CRUNCH_TEST_DIR}/source/main.cpp)
+
+  target_link_libraries(${_name}
+    boost_unit_test_framework)
+
   # Shared build target for all tests
   if(NOT TARGET build-tests)
     add_custom_target(build-tests)

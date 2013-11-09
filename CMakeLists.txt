@@ -1,18 +1,10 @@
-# Copyright (c) 2011, Christian Rorvik
+# Copyright (c) 2011-2013, Christian Rorvik
 # Distributed under the Simplified BSD License (See accompanying file LICENSE.txt)
 
-include(configure.cmake)
+vpm_depend_self()
 
-# Create 2 libraries to move the boost test library before crunch_test_lib_ 
-# in the link order. Dependent tests should link with crunch_test_lib
+vpm_add_library(crunch_test_lib
+  include/crunch/test/framework.hpp)
 
-VPM_add_library(crunch_test_lib_ STATIC
-  include/crunch/test/framework.hpp
-  source/main.cpp)
+set_target_properties(crunch_test_lib PROPERTIES LINKER_LANGUAGE CXX)
 
-vpm_add_library(crunch_test_lib STATIC
-  source/dummy.cpp)
-
-target_link_libraries(crunch_test_lib
-  boost_test
-  crunch_test_lib_)
